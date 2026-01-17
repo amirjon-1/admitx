@@ -20,7 +20,7 @@ import {
   Badge,
 } from '../components/ui';
 import { countWords } from '../lib/utils';
-import { analyzeWithSingleAgent } from '../lib/api';
+import { analyzeWithSingleAgent, analyzeEssay } from '../lib/api';
 import type { AgentType } from '../types';
 
 interface AgentFeedback {
