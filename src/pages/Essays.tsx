@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FileText,
@@ -7,6 +8,7 @@ import {
   RotateCcw,
   Copy,
   Check,
+  AlertCircle,
 } from 'lucide-react';
 import { Header } from '../components/layout';
 import { AgentCard, AuthenticityMeter } from '../components/essays';
@@ -21,6 +23,7 @@ import {
 } from '../components/ui';
 import { countWords } from '../lib/utils';
 import { analyzeWithSingleAgent, analyzeEssay } from '../lib/api';
+import { useStore } from '../store/useStore';
 import type { AgentType } from '../types';
 
 interface AgentFeedback {
@@ -104,6 +107,14 @@ const SIMULATED_FEEDBACK: Record<AgentType, { feedback: string; score?: number }
 };
 
 export function Essays() {
+  const location = useLocation();
+  const { addEssay, updateEssay, essays } = useStore();
+  
+  // Get prompt and college from navigation state
+  const navigationState = location.state as { essay?: string; college?: string } | null;
+  const essayPrompt = navigationState?.essay || '';
+  const collegeName = navigationState?.college || '';
+  
   const [essay, setEssay] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [feedback, setFeedback] = useState<AgentFeedback[]>([]);
@@ -111,8 +122,59 @@ export function Essays() {
   const [synthesisText, setSynthesisText] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [currentAgentIndex, setCurrentAgentIndex] = useState(-1);
+  const [savedEssayId, setSavedEssayId] = useState<string | null>(null);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   const wordCount = countWords(essay);
+
+  // Load existing essay draft if available
+  useEffect(() => {
+    if (essayPrompt && collegeName) {
+      const existingEssay = essays.find(
+        (e) => e.prompt === essayPrompt && e.collegeId === collegeName
+      );
+      if (existingEssay) {
+        setEssay(existingEssay.draft);
+        setSavedEssayId(existingEssay.id);
+        setLastSaved(new Date(existingEssay.updatedAt));
+      }
+    }
+  }, [essayPrompt, collegeName, essays]);
+
+  // Auto-save essay drafts
+  useEffect(() => {
+    if (!essay.trim() || !essayPrompt) return;
+
+    const timeoutId = setTimeout(() => {
+      const essayData = {
+        id: savedEssayId || `essay_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        userId: 'user_1',
+        collegeId: collegeName || null,
+        prompt: essayPrompt,
+        draft: essay,
+        version: 1,
+        authenticityScore: authenticityScore,
+        wordCount,
+        lastFeedbackAt: feedback.length > 0 ? new Date() : null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      if (savedEssayId) {
+        updateEssay(savedEssayId, {
+          draft: essay,
+          wordCount,
+          updatedAt: new Date(),
+        });
+      } else {
+        addEssay(essayData);
+        setSavedEssayId(essayData.id);
+      }
+      setLastSaved(new Date());
+    }, 2000); // Auto-save after 2 seconds of inactivity
+
+    return () => clearTimeout(timeoutId);
+  }, [essay, essayPrompt, collegeName, wordCount, savedEssayId, authenticityScore, feedback.length, addEssay, updateEssay]);
 
   const handleAnalyze = useCallback(async () => {
     if (!essay.trim()) return;
@@ -123,6 +185,11 @@ export function Essays() {
     setSynthesisText(null);
     setCurrentAgentIndex(0);
 
+    // Prepare context with the specific essay prompt
+    const promptContext = essayPrompt
+      ? `\n\nESSAY PROMPT: "${essayPrompt}"\n\nIMPORTANT: Evaluate how well this essay answers the specific prompt above. Does it directly address the question? Is it relevant and on-topic?`
+      : '';
+
     // Analyze agents sequentially for visual effect
     for (let i = 0; i < AGENTS.length; i++) {
       setCurrentAgentIndex(i);
@@ -131,7 +198,7 @@ export function Essays() {
       try {
         const response = await analyzeWithSingleAgent(
           agent.type as 'story' | 'admissions' | 'technical' | 'authenticity',
-          essay
+          essay + promptContext
         );
 
         setFeedback((prev) => [
@@ -168,7 +235,7 @@ export function Essays() {
     // Generate synthesis using real API
     setCurrentAgentIndex(4);
     try {
-      const response = await analyzeEssay(essay);
+      const response = await analyzeEssay(essay + (essayPrompt ? `\n\nESSAY PROMPT: "${essayPrompt}"` : ''));
       setSynthesisText(response.synthesis.feedback);
     } catch (error) {
       console.error('Error generating synthesis:', error);
@@ -176,9 +243,17 @@ export function Essays() {
       setSynthesisText(SIMULATED_FEEDBACK.synthesis.feedback);
     }
 
+    // Save feedback timestamp
+    if (savedEssayId) {
+      updateEssay(savedEssayId, {
+        lastFeedbackAt: new Date(),
+        authenticityScore,
+      });
+    }
+
     setCurrentAgentIndex(-1);
     setIsAnalyzing(false);
-  }, [essay]);
+  }, [essay, essayPrompt, savedEssayId, authenticityScore, updateEssay]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(essay);
@@ -204,6 +279,23 @@ export function Essays() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Essay Input */}
           <div className="space-y-4">
+            {/* Essay Prompt Card */}
+            {essayPrompt && (
+              <Card className="border-l-4 border-l-blue-500 bg-blue-50">
+                <CardContent className="pt-4">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-blue-900 mb-1">
+                        {collegeName ? `${collegeName} Supplemental Essay` : 'Essay Prompt'}
+                      </h3>
+                      <p className="text-sm text-blue-800 leading-relaxed">{essayPrompt}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -212,6 +304,11 @@ export function Essays() {
                     Your Essay
                   </CardTitle>
                   <div className="flex items-center gap-2">
+                    {lastSaved && (
+                      <span className="text-xs text-gray-500">
+                        Saved {new Date(lastSaved).toLocaleTimeString()}
+                      </span>
+                    )}
                     <Badge variant={wordCount > 650 ? 'danger' : wordCount > 500 ? 'warning' : 'default'}>
                       {wordCount} words
                     </Badge>
@@ -222,9 +319,7 @@ export function Essays() {
                 <TextArea
                   value={essay}
                   onChange={(e) => setEssay(e.target.value)}
-                  placeholder="Paste your essay here to get multi-agent feedback...
-
-Example: Start with a personal story about a challenge you faced, a project you worked on, or a moment of realization. The more specific and personal, the better feedback you'll receive."
+                  placeholder={essayPrompt ? `Write your response to the prompt above...\n\nThe AI will analyze how well your essay addresses the specific question.` : "Paste your essay here to get multi-agent feedback...\n\nExample: Start with a personal story about a challenge you faced, a project you worked on, or a moment of realization. The more specific and personal, the better feedback you'll receive."}
                   className="min-h-[400px] font-serif"
                 />
 
