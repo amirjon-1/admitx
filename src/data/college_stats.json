@@ -1,0 +1,142 @@
+{
+  "Harvard": {
+    "sat_25_75": "1460–1580",
+    "act_25_75": "33–35",
+    "gpa_avg": 4.0,
+    "acceptance_rate": "3.4%",
+    "class_size": 1950
+  },
+  "Stanford": {
+    "sat_25_75": "1440–1570",
+    "act_25_75": "32–35",
+    "gpa_avg": 3.96,
+    "acceptance_rate": "3.7%",
+    "class_size": 1760
+  },
+  "MIT": {
+    "sat_25_75": "1520–1580",
+    "act_25_75": "34–36",
+    "gpa_avg": 3.9,
+    "acceptance_rate": "4.0%",
+    "class_size": 1120
+  },
+  "Yale": {
+    "sat_25_75": "1470–1570",
+    "act_25_75": "33–35",
+    "gpa_avg": 3.95,
+    "acceptance_rate": "4.5%",
+    "class_size": 1315
+  },
+  "Princeton": {
+    "sat_25_75": "1480–1570",
+    "act_25_75": "33–35",
+    "gpa_avg": 3.98,
+    "acceptance_rate": "3.1%",
+    "class_size": 1360
+  },
+  "Columbia": {
+    "sat_25_75": "1500–1570",
+    "act_25_75": "34–35",
+    "gpa_avg": 3.98,
+    "acceptance_rate": "3.7%",
+    "class_size": 1450
+  },
+  "University of Pennsylvania": {
+    "sat_25_75": "1490–1570",
+    "act_25_75": "33–35",
+    "gpa_avg": 3.9,
+    "acceptance_rate": "4.7%",
+    "class_size": 1550
+  },
+  "Duke": {
+    "sat_25_75": "1480–1570",
+    "act_25_75": "33–35",
+    "gpa_avg": 3.92,
+    "acceptance_rate": "5.6%",
+    "class_size": 1700
+  },
+  "Northwestern": {
+    "sat_25_75": "1470–1560",
+    "act_25_75": "33–35",
+    "gpa_avg": 3.88,
+    "acceptance_rate": "7.3%",
+    "class_size": 2000
+  },
+  "Caltech": {
+    "sat_25_75": "1540–1580",
+    "act_25_75": "36–36",
+    "gpa_avg": 3.95,
+    "acceptance_rate": "2.7%",
+    "class_size": 235
+  },
+  "Brown": {
+    "sat_25_75": "1450–1560",
+    "act_25_75": "33–35",
+    "gpa_avg": 3.88,
+    "acceptance_rate": "5.2%",
+    "class_size": 1550
+  },
+  "Dartmouth": {
+    "sat_25_75": "1460–1550",
+    "act_25_75": "32–35",
+    "gpa_avg": 3.85,
+    "acceptance_rate": "6.2%",
+    "class_size": 1100
+  },
+  "Cornell": {
+    "sat_25_75": "1420–1560",
+    "act_25_75": "32–35",
+    "gpa_avg": 3.85,
+    "acceptance_rate": "9.1%",
+    "class_size": 3000
+  },
+  "Rice": {
+    "sat_25_75": "1480–1570",
+    "act_25_75": "33–35",
+    "gpa_avg": 3.93,
+    "acceptance_rate": "8.7%",
+    "class_size": 950
+  },
+  "Vanderbilt": {
+    "sat_25_75": "1470–1560",
+    "act_25_75": "33–35",
+    "gpa_avg": 3.88,
+    "acceptance_rate": "9.1%",
+    "class_size": 1620
+  },
+  "UCLA": {
+    "sat_25_75": "1250–1510",
+    "act_25_75": "30–34",
+    "gpa_avg": 3.92,
+    "acceptance_rate": "10.3%",
+    "class_size": 6500
+  },
+  "UC Berkeley": {
+    "sat_25_75": "1270–1540",
+    "act_25_75": "30–34",
+    "gpa_avg": 3.9,
+    "acceptance_rate": "11.4%",
+    "class_size": 6800
+  },
+  "Carnegie Mellon": {
+    "sat_25_75": "1480–1570",
+    "act_25_75": "33–35",
+    "gpa_avg": 3.91,
+    "acceptance_rate": "11.5%",
+    "class_size": 1550
+  },
+  "Johns Hopkins": {
+    "sat_25_75": "1490–1560",
+    "act_25_75": "33–35",
+    "gpa_avg": 3.88,
+    "acceptance_rate": "7.3%",
+    "class_size": 1330
+  },
+  "University of Michigan": {
+    "sat_25_75": "1350–1540",
+    "act_25_75": "31–34",
+    "gpa_avg": 3.88,
+    "acceptance_rate": "17.1%",
+    "class_size": 6700
+  }
+}

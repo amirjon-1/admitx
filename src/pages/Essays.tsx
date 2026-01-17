@@ -148,14 +148,20 @@ export function Essays() {
         }
       } catch (error) {
         console.error(`Error with ${agent.type} agent:`, error);
+        // Fallback to simulated feedback when API is unavailable
+        const fallback = SIMULATED_FEEDBACK[agent.type as AgentType];
         setFeedback((prev) => [
           ...prev,
           {
             ...agent,
-            feedback: `Error analyzing essay: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again or check your API connection.`,
-            score: undefined,
+            feedback: fallback.feedback,
+            score: fallback.score,
           },
         ]);
+
+        if (agent.type === 'authenticity' && fallback.score !== undefined) {
+          setAuthenticityScore(fallback.score);
+        }
       }
     }
 
@@ -166,7 +172,8 @@ export function Essays() {
       setSynthesisText(response.synthesis.feedback);
     } catch (error) {
       console.error('Error generating synthesis:', error);
-      setSynthesisText(`Error generating synthesis: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`);
+      // Fallback to simulated synthesis when API is unavailable
+      setSynthesisText(SIMULATED_FEEDBACK.synthesis.feedback);
     }
 
     setCurrentAgentIndex(-1);

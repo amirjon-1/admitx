@@ -1,0 +1,142 @@
+{
+  "Harvard": {
+    "essays": [
+      "Why do you want to attend Harvard? (650 words)",
+      "How do your intellectual interests and curiosities align with your intended field of study? (250 words)"
+    ],
+    "other_requirements": ["Activities list", "Teacher recommendations"]
+  },
+  "Stanford": {
+    "essays": [
+      "What matters most to you and why? (250 words)",
+      "The Stanford community is deeply curious and driven to learn. Tell us about something you want to study at Stanford. (250 words)"
+    ],
+    "other_requirements": ["Activities list", "Teacher recommendations"]
+  },
+  "MIT": {
+    "essays": [
+      "We know you'll travel far. But first, tell us about one academic idea or skill that you've become excited about. (250-350 words)",
+      "Now we want to know... (100 words)"
+    ],
+    "other_requirements": ["Extracurricular activities list", "Teacher recommendations"]
+  },
+  "Yale": {
+    "essays": [
+      "What do you want to explore at Yale? (125 words)",
+      "Most Yale applicants have a few interests, but others are focused on one particular passion. Tell us about your areas of interest and how you might pursue them at Yale. (150 words)"
+    ],
+    "other_requirements": ["Activities list", "Teacher recommendations", "Writing sample (optional)"]
+  },
+  "Princeton": {
+    "essays": [
+      "Tell us about something intellectual that excites you and why. (250 words)"
+    ],
+    "other_requirements": ["Activities list", "Teacher recommendations"]
+  },
+  "Columbia": {
+    "essays": [
+      "Columbia students study many things. Tell us what excites you. (100-150 words)",
+      "List a few words or phrases that describe your character or perspective. (50 words)",
+      "Intellectual curiosity and a commitment to using knowledge for the greater good are core to a Columbia education. Describe your academic interests and how you think they will help you make an impact. (200-300 words)"
+    ],
+    "other_requirements": ["Activities list", "Teacher recommendations"]
+  },
+  "University of Pennsylvania": {
+    "essays": [
+      "How will you explore your intellectual and creative interests at Penn? (200-300 words)",
+      "At Penn, we believe that diversity is a strength. Tell us about your own background, perspective, or identity and its impact on your life. (250-300 words)"
+    ],
+    "other_requirements": ["Activities list", "Teacher recommendations"]
+  },
+  "Duke": {
+    "essays": [
+      "In 250 words, tell us what you're drawn to about Duke.",
+      "Duke University is a place where you can grow, learn, and make a lasting impact. Tell us how you envision yourself contributing to the Duke community. (200-250 words)"
+    ],
+    "other_requirements": ["Activities list", "Teacher recommendations"]
+  },
+  "Northwestern": {
+    "essays": [
+      "Short Answer: What are you most passionate about, and why? (30-100 words)",
+      "Tell us about an intellectual experience that has meant something to you. (200-300 words)"
+    ],
+    "other_requirements": ["Activities list", "Teacher recommendations"]
+  },
+  "Caltech": {
+    "essays": [
+      "Intellectual vitality is central to Caltech. Describe an intellectual experience or idea that excites you. (250 words)"
+    ],
+    "other_requirements": ["Activities list", "Teacher recommendations", "Physics and Math coursework"]
+  },
+  "Brown": {
+    "essays": [
+      "Why do you want to study at Brown? (150 words)",
+      "Tell us about something you've genuinely become curious about, explored, and ultimately passionate about. (250 words)"
+    ],
+    "other_requirements": ["Activities list", "Teacher recommendations"]
+  },
+  "Dartmouth": {
+    "essays": [
+      "Dartmouth's curriculum allows you to study almost anything you want. How will you take advantage of this opportunity? (250 words)",
+      "Reflecting on your background, how do you understand your identity? (200 words)"
+    ],
+    "other_requirements": ["Activities list", "Teacher recommendations"]
+  },
+  "Cornell": {
+    "essays": [
+      "Why are you applying to Cornell specifically? (150 words)",
+      "Tell us about any intellectual curiosity that excites you and relates to your intended major. (200-250 words)"
+    ],
+    "other_requirements": ["Activities list", "Teacher recommendations"]
+  },
+  "Rice": {
+    "essays": [
+      "What aspect of the Rice experience most appeals to you? (100-150 words)",
+      "Tell us about an intellectual or creative experience that has been meaningful to you. (150-200 words)"
+    ],
+    "other_requirements": ["Activities list", "Teacher recommendations"]
+  },
+  "Vanderbilt": {
+    "essays": [
+      "Tell us about something intellectual that excites you. (200-250 words)",
+      "What is your desire and what do you expect from Vanderbilt? (200-250 words)"
+    ],
+    "other_requirements": ["Activities list", "Teacher recommendations"]
+  },
+  "UCLA": {
+    "essays": [
+      "Describe the world you come from and how it shaped your dreams and aspirations. (250 words)",
+      "Tell us about a personal quality, skill, or accomplishment that defines you. (250 words)"
+    ],
+    "other_requirements": ["Activities list", "Teacher recommendations"]
+  },
+  "UC Berkeley": {
+    "essays": [
+      "Describe your intellectual interests and how they have shaped the educational path you have taken. (250-350 words)",
+      "What would you add to the UC Berkeley community? (250-350 words)"
+    ],
+    "other_requirements": ["Activities list", "Teacher recommendations"]
+  },
+  "Carnegie Mellon": {
+    "essays": [
+      "Why do you want to attend Carnegie Mellon University? (500 words)",
+      "Tell us about something you've taught yourself. (250 words)",
+      "Additional essays vary by school/major"
+    ],
+    "other_requirements": ["Activities list", "Teacher recommendations", "Portfolio (for some programs)"]
+  },
+  "Johns Hopkins": {
+    "essays": [
+      "We know you'll attend one of the world's great universities. Why have you chosen Johns Hopkins? (150 words)",
+      "Tell us about a topic or idea that you find intellectually fascinating. (200 words)"
+    ],
+    "other_requirements": ["Activities list", "Teacher recommendations"]
+  },
+  "University of Michigan": {
+    "essays": [
+      "Everyone belongs to many communities and/or groups defined by (among other things) race, ethnicity, religion, socioeconomic status, sexual orientation, etc. (250-650 words)",
+      "Tell us about an experience through which you have gained respect and understanding across difference. (250-650 words)"
+    ],
+    "other_requirements": ["Activities list", "Teacher recommendations"]
+  }
+}

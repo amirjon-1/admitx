@@ -1,0 +1,22 @@
+{
+  "Harvard": ["REA", "RD"],
+  "Stanford": ["REA", "RD"],
+  "MIT": ["EA", "RD"],
+  "Yale": ["REA", "RD"],
+  "Princeton": ["REA", "RD"],
+  "Columbia": ["ED", "RD"],
+  "University of Pennsylvania": ["ED", "RD"],
+  "Duke": ["ED", "RD"],
+  "Northwestern": ["ED", "RD"],
+  "Caltech": ["RD"],
+  "Brown": ["ED", "RD"],
+  "Dartmouth": ["ED", "RD"],
+  "Cornell": ["ED", "RD"],
+  "Rice": ["ED", "RD"],
+  "Vanderbilt": ["ED", "RD"],
+  "UCLA": ["RD"],
+  "UC Berkeley": ["RD"],
+  "Carnegie Mellon": ["ED", "RD"],
+  "Johns Hopkins": ["ED", "RD"],
+  "University of Michigan": ["RD"]
+}

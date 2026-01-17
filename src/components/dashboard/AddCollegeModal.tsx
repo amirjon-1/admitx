@@ -1,7 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Modal, Button, Input, Select } from '../ui';
 import { generateId } from '../../lib/utils';
 import type { College } from '../../types';
+
+import collegeDeadlines from '../../data/college_deadlines.json';
+import collegeDecisions from '../../data/college_decisions.json';
+import collegeApplications from '../../data/college_applications.json';
 
 interface AddCollegeModalProps {
   isOpen: boolean;
@@ -9,99 +13,69 @@ interface AddCollegeModalProps {
   onAdd: (college: College) => void;
 }
 
-const POPULAR_COLLEGES = [
-  'Harvard',
-  'Stanford',
-  'MIT',
-  'Yale',
-  'Princeton',
-  'Columbia',
-  'UPenn',
-  'Duke',
-  'Northwestern',
-  'Caltech',
-  'Brown',
-  'Dartmouth',
-  'Cornell',
-  'Rice',
-  'Vanderbilt',
-  'UCLA',
-  'UC Berkeley',
-  'USC',
-  'NYU',
-  'Georgetown',
-];
-
-const DECISION_TYPES = [
-  { value: 'ED', label: 'Early Decision (ED)' },
-  { value: 'ED2', label: 'Early Decision II (ED2)' },
-  { value: 'EA', label: 'Early Action (EA)' },
-  { value: 'REA', label: 'Restrictive Early Action (REA)' },
-  { value: 'RD', label: 'Regular Decision (RD)' },
-];
-
-const APPLICATION_TYPES = [
-  { value: 'Common App', label: 'Common App' },
-  { value: 'Coalition', label: 'Coalition' },
-  { value: 'UC Application', label: 'UC Application' },
-  { value: 'Direct', label: 'Direct Application' },
-  { value: 'QuestBridge', label: 'QuestBridge' },
-];
+const DECISION_LABELS: Record<string, string> = {
+  ED: 'Early Decision (ED)',
+  ED2: 'Early Decision II (ED2)',
+  EA: 'Early Action (EA)',
+  REA: 'Restrictive Early Action (REA)',
+  RD: 'Regular Decision (RD)',
+};
 
 export function AddCollegeModal({ isOpen, onClose, onAdd }: AddCollegeModalProps) {
   const [name, setName] = useState('');
-  const [customName, setCustomName] = useState('');
-  const [deadline, setDeadline] = useState('');
   const [decisionType, setDecisionType] = useState('RD');
-  const [applicationType, setApplicationType] = useState('Common App');
+  const [deadline, setDeadline] = useState('');
+  const [applicationType, setApplicationType] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const allowedDecisions =
+    (collegeDecisions as Record<string, string[]>)[name] ?? ['RD'];
+
+  const allowedApplications =
+    (collegeApplications as Record<string, string[]>)[name] ?? ['Common App'];
+
+  useEffect(() => {
+    if (!allowedDecisions.includes(decisionType)) {
+      setDecisionType(allowedDecisions[0]);
+    }
+  }, [name, allowedDecisions]);
+
+  useEffect(() => {
+    const deadlines =
+      (collegeDeadlines as Record<string, Record<string, string>>)[name];
+    if (!deadlines) return;
+
+    const d = deadlines[decisionType] ?? deadlines.RD;
+    if (d) setDeadline(d);
+  }, [name, decisionType]);
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const collegeName = name === 'other' ? customName : name;
-
-    const college: College = {
+    onAdd({
       id: generateId(),
       userId: 'demo-user',
-      name: collegeName,
+      name,
       deadline: deadline ? new Date(deadline) : null,
       decisionType: decisionType as College['decisionType'],
       applicationType,
       status: 'not_started',
       result: null,
       createdAt: new Date(),
-    };
+    });
 
-    onAdd(college);
     setIsSubmitting(false);
     onClose();
-    resetForm();
   };
 
-  const resetForm = () => {
-    setName('');
-    setCustomName('');
-    setDeadline('');
-    setDecisionType('RD');
-    setApplicationType('Common App');
-  };
-
-  const collegeOptions = [
-    { value: '', label: 'Select a college...' },
-    ...POPULAR_COLLEGES.map((c) => ({ value: c, label: c })),
-    { value: 'other', label: 'Other (type custom name)' },
-  ];
+  const collegeOptions = Object.keys(collegeDeadlines).map((college) => ({
+    value: college,
+    label: college,
+  }));
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Add College"
-      description="Track your application to a new college"
-      size="md"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} title="Add College">
       <form onSubmit={handleSubmit} className="space-y-4">
         <Select
           label="College"
@@ -110,48 +84,31 @@ export function AddCollegeModal({ isOpen, onClose, onAdd }: AddCollegeModalProps
           onChange={(e) => setName(e.target.value)}
         />
 
-        {name === 'other' && (
-          <Input
-            label="College Name"
-            value={customName}
-            onChange={(e) => setCustomName(e.target.value)}
-            placeholder="Enter college name"
-            required
-          />
-        )}
-
-        <Input
-          label="Application Deadline"
-          type="date"
-          value={deadline}
-          onChange={(e) => setDeadline(e.target.value)}
-        />
-
         <Select
           label="Decision Type"
-          options={DECISION_TYPES}
+          options={allowedDecisions.map((d) => ({
+            value: d,
+            label: DECISION_LABELS[d],
+          }))}
           value={decisionType}
           onChange={(e) => setDecisionType(e.target.value)}
         />
 
+        <Input label="Deadline" type="date" value={deadline} readOnly />
+
         <Select
           label="Application Type"
-          options={APPLICATION_TYPES}
+          options={allowedApplications.map((a) => ({
+            value: a,
+            label: a,
+          }))}
           value={applicationType}
           onChange={(e) => setApplicationType(e.target.value)}
         />
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            disabled={!name || (name === 'other' && !customName)}
-            isLoading={isSubmitting}
-          >
-            Add College
-          </Button>
+        <div className="flex justify-end gap-3">
+          <Button variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button type="submit" isLoading={isSubmitting}>Add</Button>
         </div>
       </form>
     </Modal>

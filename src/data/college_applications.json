@@ -1,0 +1,22 @@
+{
+  "Harvard": ["Common App", "Coalition", "QuestBridge"],
+  "Stanford": ["Common App", "Coalition", "QuestBridge"],
+  "MIT": ["Common App", "QuestBridge"],
+  "Yale": ["Common App", "Coalition", "QuestBridge"],
+  "Princeton": ["Common App", "Coalition", "QuestBridge"],
+  "Columbia": ["Common App", "Coalition", "QuestBridge"],
+  "University of Pennsylvania": ["Common App", "Coalition", "QuestBridge"],
+  "Duke": ["Common App", "Coalition", "QuestBridge"],
+  "Northwestern": ["Common App", "Coalition", "QuestBridge"],
+  "Caltech": ["Common App", "Coalition"],
+  "Brown": ["Common App", "Coalition", "QuestBridge"],
+  "Dartmouth": ["Common App", "Coalition", "QuestBridge"],
+  "Cornell": ["Common App", "Coalition", "QuestBridge"],
+  "Rice": ["Common App", "Coalition", "QuestBridge"],
+  "Vanderbilt": ["Common App", "Coalition", "QuestBridge"],
+  "UCLA": ["UC Application"],
+  "UC Berkeley": ["UC Application"],
+  "Carnegie Mellon": ["Common App", "Coalition", "QuestBridge"],
+  "Johns Hopkins": ["Common App", "Coalition", "QuestBridge"],
+  "University of Michigan": ["Common App", "Coalition"]
+}

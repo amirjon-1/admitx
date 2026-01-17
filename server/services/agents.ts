@@ -4,14 +4,14 @@ let groq: Groq | null = null;
 
 // Initialize Groq - will be called after env vars are loaded
 export function initializeGroq() {
-  console.log('Initializing Groq with API key:', process.env.GEMINI_API_KEY ? `${process.env.GEMINI_API_KEY.substring(0, 10)}...` : 'NOT SET');
-  
-  if (!process.env.GEMINI_API_KEY) {
-    throw new Error('GEMINI_API_KEY is not set in environment variables');
+  console.log('Initializing Groq with API key:', process.env.GROQ_API_KEY ? `${process.env.GROQ_API_KEY.substring(0, 10)}...` : 'NOT SET');
+
+  if (!process.env.GROQ_API_KEY) {
+    throw new Error('GROQ_API_KEY is not set in environment variables');
   }
-  
+
   groq = new Groq({
-    apiKey: process.env.GEMINI_API_KEY,
+    apiKey: process.env.GROQ_API_KEY,
   });
   console.log('✅ Groq instance created and configured');
 }
@@ -141,7 +141,7 @@ async function callGroq(systemPrompt: string, userContent: string): Promise<stri
   
   try {
     if (!groq) {
-      throw new Error('Groq client not initialized. Check that GEMINI_API_KEY is set in .env');
+      throw new Error('Groq client not initialized. Check that GROQ_API_KEY is set in .env');
     }
     
     const prompt = `${systemPrompt}\n\n---\n\nUser Input:\n${userContent}`;
