@@ -1,9 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FileText,
   Sparkles,
-  Loader2,
   Save,
   RotateCcw,
   Copy,
@@ -21,6 +20,7 @@ import {
   Badge,
 } from '../components/ui';
 import { countWords } from '../lib/utils';
+import { analyzeWithSingleAgent } from '../lib/api';
 import type { AgentType } from '../types';
 
 interface AgentFeedback {
@@ -38,7 +38,7 @@ const AGENTS: Omit<AgentFeedback, 'feedback' | 'score'>[] = [
   { type: 'authenticity', name: 'Authenticity Agent', icon: '🔍' },
 ];
 
-// Simulated agent responses (in production, these would come from Claude API)
+// Simulated agent responses (fallback when API unavailable)
 const SIMULATED_FEEDBACK: Record<AgentType, { feedback: string; score?: number }> = {
   story: {
     feedback: `**Narrative Structure**: Your essay opens with a compelling hook, but the middle section loses momentum. The transition between your challenge and resolution feels abrupt.
@@ -110,6 +110,7 @@ export function Essays() {
   const [authenticityScore, setAuthenticityScore] = useState<number | null>(null);
   const [synthesisText, setSynthesisText] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [currentAgentIndex, setCurrentAgentIndex] = useState(-1);
 
   const wordCount = countWords(essay);
 
@@ -120,32 +121,55 @@ export function Essays() {
     setFeedback([]);
     setAuthenticityScore(null);
     setSynthesisText(null);
+    setCurrentAgentIndex(0);
 
-    // Simulate sequential agent analysis
+    // Analyze agents sequentially for visual effect
     for (let i = 0; i < AGENTS.length; i++) {
-      await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 500));
-
+      setCurrentAgentIndex(i);
       const agent = AGENTS[i];
-      const response = SIMULATED_FEEDBACK[agent.type];
 
-      setFeedback((prev) => [
-        ...prev,
-        {
-          ...agent,
-          feedback: response.feedback,
-          score: response.score,
-        },
-      ]);
+      try {
+        const response = await analyzeWithSingleAgent(
+          agent.type as 'story' | 'admissions' | 'technical' | 'authenticity',
+          essay
+        );
 
-      if (agent.type === 'authenticity') {
-        setAuthenticityScore(response.score || null);
+        setFeedback((prev) => [
+          ...prev,
+          {
+            ...agent,
+            feedback: response.feedback,
+            score: response.score,
+          },
+        ]);
+
+        if (agent.type === 'authenticity' && response.score) {
+          setAuthenticityScore(response.score);
+        }
+      } catch (error) {
+        console.error(`Error with ${agent.type} agent:`, error);
+        setFeedback((prev) => [
+          ...prev,
+          {
+            ...agent,
+            feedback: `Error analyzing essay: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again or check your API connection.`,
+            score: undefined,
+          },
+        ]);
       }
     }
 
-    // Add synthesis
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setSynthesisText(SIMULATED_FEEDBACK.synthesis.feedback);
+    // Generate synthesis using real API
+    setCurrentAgentIndex(4);
+    try {
+      const response = await analyzeEssay(essay);
+      setSynthesisText(response.synthesis.feedback);
+    } catch (error) {
+      console.error('Error generating synthesis:', error);
+      setSynthesisText(`Error generating synthesis: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`);
+    }
 
+    setCurrentAgentIndex(-1);
     setIsAnalyzing(false);
   }, [essay]);
 
@@ -191,7 +215,9 @@ export function Essays() {
                 <TextArea
                   value={essay}
                   onChange={(e) => setEssay(e.target.value)}
-                  placeholder="Paste your essay here to get multi-agent feedback..."
+                  placeholder="Paste your essay here to get multi-agent feedback...
+
+Example: Start with a personal story about a challenge you faced, a project you worked on, or a moment of realization. The more specific and personal, the better feedback you'll receive."
                   className="min-h-[400px] font-serif"
                 />
 
@@ -217,14 +243,14 @@ export function Essays() {
                     isLoading={isAnalyzing}
                   >
                     <Sparkles className="w-4 h-4 mr-2" />
-                    Analyze with AI Agents
+                    {isAnalyzing ? 'Analyzing...' : 'Analyze with AI Agents'}
                   </Button>
                 </div>
               </CardContent>
             </Card>
 
             {/* Authenticity Score */}
-            <AuthenticityMeter score={authenticityScore} isLoading={isAnalyzing} />
+            <AuthenticityMeter score={authenticityScore} isLoading={isAnalyzing && currentAgentIndex >= 3} />
           </div>
 
           {/* Agent Feedback */}
@@ -245,14 +271,14 @@ export function Essays() {
 
               {/* Loading states for remaining agents */}
               {isAnalyzing &&
-                AGENTS.slice(feedback.length).map((agent) => (
+                AGENTS.slice(feedback.length).map((agent, index) => (
                   <AgentCard
                     key={agent.type}
                     name={agent.name}
                     type={agent.type}
                     icon={agent.icon}
                     feedback={null}
-                    isLoading={feedback.length === AGENTS.findIndex((a) => a.type === agent.type)}
+                    isLoading={currentAgentIndex === feedback.length + index}
                   />
                 ))}
 
@@ -299,6 +325,9 @@ export function Essays() {
                   <p className="text-gray-500 max-w-sm mx-auto">
                     Paste your essay and click "Analyze" to get feedback from 4 specialized AI agents plus a synthesis of their recommendations.
                   </p>
+                  <div className="mt-4 text-sm text-gray-400">
+                    <span>Powered by Groq AI</span>
+                  </div>
                 </CardContent>
               </Card>
             )}

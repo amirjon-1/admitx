@@ -10,10 +10,13 @@ agentsRouter.post('/story', async (req: Request, res: Response) => {
     if (!essay) {
       return res.status(400).json({ error: 'Essay is required' });
     }
+    console.log('Story agent analyzing essay of length:', essay.length);
     const feedback = await runAgent('story', essay);
     res.json(feedback);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to analyze essay' });
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error('Story agent error:', errorMsg, error);
+    res.status(500).json({ error: 'Failed to analyze essay', details: errorMsg });
   }
 });
 
@@ -23,10 +26,13 @@ agentsRouter.post('/admissions', async (req: Request, res: Response) => {
     if (!essay) {
       return res.status(400).json({ error: 'Essay is required' });
     }
+    console.log('Admissions agent analyzing essay of length:', essay.length);
     const feedback = await runAgent('admissions', essay);
     res.json(feedback);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to analyze essay' });
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error('Admissions agent error:', errorMsg, error);
+    res.status(500).json({ error: 'Failed to analyze essay', details: errorMsg });
   }
 });
 
@@ -36,10 +42,13 @@ agentsRouter.post('/technical', async (req: Request, res: Response) => {
     if (!essay) {
       return res.status(400).json({ error: 'Essay is required' });
     }
+    console.log('Technical agent analyzing essay of length:', essay.length);
     const feedback = await runAgent('technical', essay);
     res.json(feedback);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to analyze essay' });
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error('Technical agent error:', errorMsg, error);
+    res.status(500).json({ error: 'Failed to analyze essay', details: errorMsg });
   }
 });
 
@@ -49,10 +58,13 @@ agentsRouter.post('/authenticity', async (req: Request, res: Response) => {
     if (!essay) {
       return res.status(400).json({ error: 'Essay is required' });
     }
+    console.log('Authenticity agent analyzing essay of length:', essay.length);
     const feedback = await runAgent('authenticity', essay);
     res.json(feedback);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to analyze essay' });
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error('Authenticity agent error:', errorMsg, error);
+    res.status(500).json({ error: 'Failed to analyze essay', details: errorMsg });
   }
 });
 

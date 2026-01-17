@@ -1,60 +1,131 @@
-import Anthropic from '@anthropic-ai/sdk';
+import Groq from 'groq-sdk';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+let groq: Groq | null = null;
 
-// Agent System Prompts
+// Initialize Groq - will be called after env vars are loaded
+export function initializeGroq() {
+  console.log('Initializing Groq with API key:', process.env.GEMINI_API_KEY ? `${process.env.GEMINI_API_KEY.substring(0, 10)}...` : 'NOT SET');
+  
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error('GEMINI_API_KEY is not set in environment variables');
+  }
+  
+  groq = new Groq({
+    apiKey: process.env.GEMINI_API_KEY,
+  });
+  console.log('✅ Groq instance created and configured');
+}
+
+export async function verifyGroqConnection(): Promise<boolean> {
+  try {
+    if (!groq) {
+      console.error('❌ Groq instance not initialized');
+      return false;
+    }
+    // Make a simple test call
+    console.log('Testing Groq connection...');
+    const response = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      messages: [{role: 'user', content: 'test'}],
+      max_tokens: 10,
+    });
+    console.log('✅ Test API call succeeded, received response');
+    return true;
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : JSON.stringify(error);
+    console.error('❌ Groq connection test failed:', msg);
+    return false;
+  }
+}
 const AGENT_PROMPTS = {
   story: `You are a narrative expert analyzing college essays.
-Focus on:
-- Story arc and structure
-- Emotional authenticity
-- Show vs. tell
-- Unique voice
-- Memorable moments
 
-Be specific. Quote directly from the essay. Provide actionable feedback.`,
+Your task: Analyze the SPECIFIC essay provided and give PERSONALIZED feedback.
+
+Focus on:
+- Story arc and structure (identify where it works and where it falls flat)
+- Emotional authenticity (point to specific moments)
+- Show vs. tell (quote examples from THIS essay)
+- Unique voice (what makes THIS student's voice distinctive or generic)
+- Memorable moments (which lines/images stick with you)
+
+CRITICAL: You MUST quote directly from the essay. Use actual phrases like "When you wrote '[quote]'..." to reference specific parts.
+
+Avoid generic advice like "add more details" - instead say "The moment in paragraph 2 where you [specific action] could be expanded with..."
+
+Format your response with clear headers using ** for bold.`,
 
   admissions: `You are a college admissions officer with 15+ years of experience at a top-10 university.
-Focus on:
-- Red flags (clichés, generic statements)
-- What this reveals about the student
-- Fit for competitive schools
-- Standout qualities
-- Common pitfalls
 
-Be brutally honest but constructive. Identify specific phrases that are problematic.`,
+Analyze THIS SPECIFIC essay, not a generic essay.
+
+Focus on:
+- Red flags: Quote the EXACT clichés or generic statements you find (e.g., "The phrase '[exact quote]' appears in X% of essays")
+- What THIS essay reveals about THIS specific student
+- Standout qualities: What's unique in THIS essay that you remember?
+- Problematic phrases: Quote them directly and explain why they hurt the application
+
+CRITICAL: Reference actual content from the essay. Say things like:
+- "When you mention '[exact quote]', it reads as..."
+- "The strongest moment is '[exact quote]' because..."
+- "Line like '[exact quote]' should be cut because..."
+
+Be brutally honest but constructive.
+Format your response with clear headers using ** for bold.`,
 
   technical: `You are a writing coach specializing in college essays.
-Focus on:
-- Grammar and mechanics
-- Sentence structure and flow
-- Word choice and clarity
-- Transitions
-- Length/pacing
 
-Be precise and actionable. Point to specific line numbers when possible.`,
+Analyze THIS SPECIFIC essay for technical issues.
+
+Focus on:
+- Grammar and mechanics: Identify SPECIFIC errors with line references (e.g., "Sentence 3: 'there' should be 'their'")
+- Sentence structure: Quote sentences that are too long/short/awkward
+- Word choice: Point to specific words that should be changed (e.g., "Replace 'very unique' with...")
+- Transitions: Identify where paragraph breaks are jarring
+- Pacing: Note which paragraphs are too long/short
+
+CRITICAL: Always quote the problematic text. Say:
+- "The sentence '[full sentence]' has a comma splice"
+- "The phrase '[exact phrase]' is redundant because..."
+- "Paragraph X transitions abruptly from '[quote]' to '[quote]'"
+
+Be precise and actionable with SPECIFIC line-by-line feedback.
+Format your response with clear headers using ** for bold.`,
 
   authenticity: `You are an AI-detection specialist analyzing essays for authenticity.
+
+Analyze THIS SPECIFIC essay for authenticity markers.
+
 Focus on:
-- Signs of AI generation (generic phrases, formal language)
-- Lack of specificity or personal detail
-- Teen voice vs. adult voice
-- Authentic emotion vs. manufactured
-- Over-polished sections
+- Signs of AI generation: Quote any suspiciously generic or formal phrases (e.g., "The phrase '[quote]' sounds AI-generated because...")
+- Lack of specificity: Point to vague sections (e.g., "When you say '[quote]', this lacks specific details like...")
+- Teen voice vs. adult voice: Quote examples that sound age-appropriate or too mature
+- Authentic emotion: Which specific moments feel genuine vs. manufactured?
+- Over-polished sections: Identify paragraphs that feel too perfect
 
-Score authenticity 1-100 and explain your reasoning. Higher scores mean more authentic/human-written.`,
+CRITICAL: Always reference actual content from the essay. Compare specific sections:
+- "The line '[quote]' sounds authentic because..."
+- "However, '[quote]' feels AI-generated because..."
 
-  synthesis: `You are synthesizing feedback from 4 specialist agents analyzing a college essay.
+IMPORTANT: You MUST end your response with a score line in this exact format:
+"Authenticity Score: XX/100"
 
-Create a unified action plan:
-1. Top 3 strengths (be specific)
-2. Top 3 areas for improvement (prioritized)
-3. Concrete next steps
-4. Overall assessment (letter grade with explanation)
+Where XX is a number from 1-100. Higher scores mean more authentic/human-written.
+Format your response with clear headers using ** for bold.`,
 
-Resolve any disagreements between agents. Be encouraging but honest.`,
+  synthesis: `You are synthesizing feedback from 4 specialist agents analyzing THIS SPECIFIC college essay.
+
+Review the feedback from all agents and create a unified, PERSONALIZED action plan:
+
+1. **Top 3 Strengths**: Reference specific moments/lines the agents praised (quote them)
+2. **Top 3 Areas for Improvement**: Prioritize based on impact, referencing specific issues the agents found
+3. **Concrete Next Steps**: Create a numbered checklist with specific edits (e.g., "Rewrite opening to start with '[suggested change]'")
+4. **Overall Assessment**: Provide a letter grade with detailed explanation
+
+CRITICAL: This must be SPECIFIC to this essay. Reference actual content and agent feedback. Don't give generic advice.
+
+Resolve any disagreements between agents. Be encouraging but honest.
+Format your response with clear headers using ** for bold.`,
 };
 
 export interface AgentFeedback {
@@ -63,12 +134,50 @@ export interface AgentFeedback {
   score?: number;
 }
 
+async function callGroq(systemPrompt: string, userContent: string): Promise<string> {
+  console.log('🔍 callGroq called');
+  console.log('groq instance exists:', !!groq);
+  console.log('groq type:', groq?.constructor?.name);
+  
+  try {
+    if (!groq) {
+      throw new Error('Groq client not initialized. Check that GEMINI_API_KEY is set in .env');
+    }
+    
+    const prompt = `${systemPrompt}\n\n---\n\nUser Input:\n${userContent}`;
+    
+    console.log('📤 Calling Groq API with model: llama-3.3-70b-versatile');
+    const message = await groq.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      model: 'llama-3.3-70b-versatile',
+      max_tokens: 1024,
+    });
+    
+    const text = message.choices[0]?.message?.content || '';
+    console.log('✅ Groq response received, length:', text.length);
+    return text;
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+    console.error('❌ Groq API error:', errorMsg);
+    if (error instanceof Error && 'status' in error) {
+      console.error('HTTP Status:', (error as any).status);
+    }
+    throw new Error(`Groq API failed: ${errorMsg}`);
+  }
+}
+
 export async function runAgent(
   agentType: keyof typeof AGENT_PROMPTS,
   essay: string,
   additionalContext?: string
 ): Promise<AgentFeedback> {
   try {
+    console.log(`Running ${agentType} agent...`);
     const systemPrompt = AGENT_PROMPTS[agentType];
 
     let userContent = `Analyze this college essay:\n\n${essay}`;
@@ -76,26 +185,17 @@ export async function runAgent(
       userContent += `\n\nAdditional context:\n${additionalContext}`;
     }
 
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1500,
-      system: systemPrompt,
-      messages: [{
-        role: 'user',
-        content: userContent,
-      }],
-    });
-
-    const feedbackText = response.content[0].type === 'text'
-      ? response.content[0].text
-      : '';
+    const feedbackText = await callGroq(systemPrompt, userContent);
 
     // Extract score for authenticity agent
     let score: number | undefined;
     if (agentType === 'authenticity') {
-      const scoreMatch = feedbackText.match(/(\d{1,3})(?:\/100|\s*percent|\s*%)/i);
+      const scoreMatch = feedbackText.match(/(?:Authenticity\s*Score|Score)[:\s]*(\d{1,3})(?:\/100)?/i);
       if (scoreMatch) {
-        score = parseInt(scoreMatch[1]);
+        score = Math.min(100, Math.max(1, parseInt(scoreMatch[1])));
+      } else {
+        // Default score if not found
+        score = 75;
       }
     }
 
@@ -164,15 +264,10 @@ export async function extractStoryThreads(transcript: string): Promise<{
   }>;
 }> {
   try {
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 2000,
-      system: `You are an expert at extracting meaningful personal stories from interview transcripts for college essays.
+    const systemPrompt = `You are an expert at extracting meaningful personal stories from interview transcripts for college essays.
+Your job is to identify distinct story threads that could become compelling college essays.`;
 
-Your job is to identify distinct story threads that could become compelling college essays.`,
-      messages: [{
-        role: 'user',
-        content: `Analyze this interview transcript and extract meaningful personal stories.
+    const userContent = `Analyze this interview transcript and extract meaningful personal stories.
 
 Transcript:
 ${transcript}
@@ -185,7 +280,7 @@ For each story, identify:
 5. Potential essay themes
 6. Memorable quotes (verbatim from transcript)
 
-Return as JSON:
+Return as JSON only (no markdown code blocks):
 {
   "threads": [
     {
@@ -198,11 +293,9 @@ Return as JSON:
       "quotes": ["...", "..."]
     }
   ]
-}`,
-      }],
-    });
+}`;
 
-    const text = response.content[0].type === 'text' ? response.content[0].text : '';
+    const text = await callGroq(systemPrompt, userContent);
 
     // Extract JSON from response
     const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -230,12 +323,9 @@ export async function calculateInitialOdds(
   schoolName: string
 ): Promise<number> {
   try {
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 500,
-      messages: [{
-        role: 'user',
-        content: `Estimate the admission probability for this profile to ${schoolName}:
+    const systemPrompt = `You are an expert at predicting college admission outcomes based on student profiles.`;
+
+    const userContent = `Estimate the admission probability for this profile to ${schoolName}:
 
 GPA: ${profile.gpa}
 Test Score: ${profile.testScore} (${profile.testType})
@@ -253,11 +343,9 @@ Consider:
 - Demographic factors
 - EC strength and tier
 
-Return ONLY a number 1-100 representing probability. No explanation.`,
-      }],
-    });
+Return ONLY a number 1-100 representing probability. No explanation.`;
 
-    const text = response.content[0].type === 'text' ? response.content[0].text : '50';
+    const text = await callGroq(systemPrompt, userContent);
     const match = text.match(/\d+/);
     return match ? Math.min(100, Math.max(1, parseInt(match[0]))) : 50;
   } catch (error) {
