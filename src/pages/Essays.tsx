@@ -127,30 +127,33 @@ export function Essays() {
 
   const wordCount = countWords(essay);
 
-  // Load existing essay draft if available
+  // Load existing essay draft if available (only once on mount)
   useEffect(() => {
-    if (essayPrompt && collegeName) {
+    let loaded = false;
+    if (essayPrompt && collegeName && !loaded) {
       const existingEssay = essays.find(
         (e) => e.prompt === essayPrompt && e.collegeId === collegeName
       );
-      if (existingEssay) {
+      if (existingEssay && !essay) {
         setEssay(existingEssay.draft);
         setSavedEssayId(existingEssay.id);
         setLastSaved(new Date(existingEssay.updatedAt));
+        loaded = true;
       }
     }
-  }, [essayPrompt, collegeName, essays]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
-  // Auto-save essay drafts
+  // Auto-save essay drafts continuously
   useEffect(() => {
-    if (!essay.trim() || !essayPrompt) return;
+    if (!essay.trim()) return;
 
     const timeoutId = setTimeout(() => {
       const essayData = {
         id: savedEssayId || `essay_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         userId: 'user_1',
         collegeId: collegeName || null,
-        prompt: essayPrompt,
+        prompt: essayPrompt || 'Untitled Essay',
         draft: essay,
         version: 1,
         authenticityScore: authenticityScore,
@@ -171,10 +174,10 @@ export function Essays() {
         setSavedEssayId(essayData.id);
       }
       setLastSaved(new Date());
-    }, 2000); // Auto-save after 2 seconds of inactivity
+    }, 1000); // Auto-save after 1 second of inactivity
 
     return () => clearTimeout(timeoutId);
-  }, [essay, essayPrompt, collegeName, wordCount, savedEssayId, authenticityScore, feedback.length, addEssay, updateEssay]);
+  }, [essay, wordCount, savedEssayId, authenticityScore, feedback.length, addEssay, updateEssay, essayPrompt, collegeName]);
 
   const handleAnalyze = useCallback(async () => {
     if (!essay.trim()) return;
