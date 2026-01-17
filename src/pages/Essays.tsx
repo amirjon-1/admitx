@@ -218,20 +218,15 @@ export function Essays() {
         }
       } catch (error) {
         console.error(`Error with ${agent.type} agent:`, error);
-        // Fallback to simulated feedback when API is unavailable
-        const fallback = SIMULATED_FEEDBACK[agent.type as AgentType];
+        // Show error message instead of fallback
         setFeedback((prev) => [
           ...prev,
           {
             ...agent,
-            feedback: fallback.feedback,
-            score: fallback.score,
+            feedback: `**Error**: Failed to get AI analysis. Please check that the server is running and try again.\n\nError details: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            score: undefined,
           },
         ]);
-
-        if (agent.type === 'authenticity' && fallback.score !== undefined) {
-          setAuthenticityScore(fallback.score);
-        }
       }
     }
 
@@ -242,8 +237,7 @@ export function Essays() {
       setSynthesisText(response.synthesis.feedback);
     } catch (error) {
       console.error('Error generating synthesis:', error);
-      // Fallback to simulated synthesis when API is unavailable
-      setSynthesisText(SIMULATED_FEEDBACK.synthesis.feedback);
+      setSynthesisText(`**Error**: Failed to generate synthesis. Please check that the server is running and try again.\n\nError details: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 
     // Save feedback timestamp
