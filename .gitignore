@@ -12,7 +12,13 @@ dist
 dist-ssr
 *.local
 
-# Editor directories and files
+# Test files
+test-groq.*
+test-server.*
+test-*.mjs
+test-*.js
+
+# Environment variables
 .vscode/*
 !.vscode/extensions.json
 .idea
