@@ -22,10 +22,11 @@ function App() {
           fetchActivities(user.id).catch(() => []),
           fetchHonors(user.id).catch(() => []),
         ]);
-        setColleges(colleges);
-        setEssays(essays);
-        setActivities(activities);
-        setHonors(honors);
+        const current = useStore.getState();
+        setColleges(colleges.length ? colleges : current.colleges);
+        setEssays(essays.length ? essays : current.essays);
+        setActivities(activities.length ? activities : current.activities);
+        setHonors(honors.length ? honors : current.honors);
       }
     };
 
@@ -41,10 +42,11 @@ function App() {
           fetchActivities(user.id).catch(() => []),
           fetchHonors(user.id).catch(() => []),
         ]);
-        setColleges(colleges);
-        setEssays(essays);
-        setActivities(activities);
-        setHonors(honors);
+        const current = useStore.getState();
+        setColleges(colleges.length ? colleges : current.colleges);
+        setEssays(essays.length ? essays : current.essays);
+        setActivities(activities.length ? activities : current.activities);
+        setHonors(honors.length ? honors : current.honors);
       } else {
         setUser(null);
         setColleges([]);
