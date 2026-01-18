@@ -1,9 +1,14 @@
 {
     "rewrites": [
       {
-        "source": "/interviewer/:path*",
-        "destination": "https://agent-starter-react-62v1.vercel.app/:path*"
+        "source": "/:path*",
+        "destination": "https://agent-starter-react-62v1.vercel.app/:path*",
+        "has": [
+          {
+            "type": "host",
+            "value": "interviewer.yourdomain.com"
+          }
+        ]
       }
     ]
   }
-  
