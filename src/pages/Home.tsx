@@ -76,9 +76,9 @@ export function Home() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-              className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-primary-600 text-white mb-8 shadow-lg"
+              className="inline-flex items-center justify-center mb-8"
             >
-              <GraduationCap className="w-10 h-10" />
+              <img src="/vite.svg" alt="AdmitX Logo" className="w-32 h-auto" />
             </motion.div>
 
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-6">

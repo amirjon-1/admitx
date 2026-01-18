@@ -1,0 +1,30 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <!-- Sound waves (blue) -->
+  <g id="sound-waves">
+    <rect x="20" y="85" width="8" height="30" fill="#2563EB" rx="4"/>
+    <rect x="32" y="75" width="8" height="50" fill="#6366F1" rx="4"/>
+    <rect x="44" y="65" width="8" height="70" fill="#3B82F6" rx="4"/>
+  </g>
+  
+  <!-- Triangle (blue and purple gradient) -->
+  <defs>
+    <linearGradient id="triangleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#6366F1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7C3AED;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <path d="M 70 40 L 130 160 L 110 160 Z" fill="url(#triangleGradient)" stroke="url(#triangleGradient)" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M 90 60 L 120 160 L 100 160 Z" fill="none" stroke="url(#triangleGradient)" stroke-width="3" stroke-linejoin="round"/>
+  
+  <!-- Profile/Head outline (green) -->
+  <g id="profile" fill="none" stroke="#4ADE80" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Head circle -->
+    <circle cx="155" cy="70" r="25"/>
+    <!-- Chin -->
+    <path d="M 140 90 Q 155 105 170 90"/>
+    <!-- Ear -->
+    <path d="M 175 65 Q 180 70 175 75"/>
+  </g>
+</svg>
