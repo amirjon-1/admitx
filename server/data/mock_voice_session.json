@@ -1,0 +1,50 @@
+{
+    "user_id": "demo-user",
+    "session_id": "session-123",
+    "created_at": "2026-01-17T23:59:00.000Z",
+    "student_profile": {
+      "name": "Adit",
+      "grade": 11,
+      "intended_major": "Computer Science",
+      "gpa_weighted": 4.5,
+      "gpa_unweighted": 3.9,
+      "sat": 0,
+      "act": 0
+    },
+    "turns": [
+      { "role": "assistant", "text": "What grade are you in and what major are you considering?" },
+      { "role": "user", "text": "I'm a junior and I'm thinking CS." },
+      { "role": "assistant", "text": "What are your main activities and leadership roles?" },
+      { "role": "user", "text": "VEX Robotics team lead, built apps, did research on diabetes detection, and run cross country." }
+    ],
+    "raw_notes": {
+      "activities": [
+        {
+          "name": "VEX Robotics",
+          "role": "Team Lead",
+          "years": "9-11",
+          "hours_per_week": 8,
+          "weeks_per_year": 28,
+          "impact": "Led build + programming; competed at regionals/state"
+        },
+        {
+          "name": "Diabetes detection project",
+          "role": "Student Researcher",
+          "years": "10-11",
+          "hours_per_week": 5,
+          "weeks_per_year": 20,
+          "impact": "Trained ML models for foot ulcer detection; built prototype app"
+        },
+        {
+          "name": "Cross Country / Track",
+          "role": "Athlete",
+          "years": "9-11",
+          "hours_per_week": 7,
+          "weeks_per_year": 30,
+          "impact": "Varsity runner"
+        }
+      ]
+    }
+  }
+
+  

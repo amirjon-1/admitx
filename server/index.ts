@@ -1,12 +1,17 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import { activitiesRouter } from "./routes/activities";
+
+
 
 import { agentsRouter } from "./routes/agents";
 import { marketsRouter } from "./routes/markets";
 import { voiceRouter } from "./routes/voice";
 import livekitRouter from "./routes/livekit";
 import { initializeGroq, verifyGroqConnection } from "./services/agents";
+
+
 
 dotenv.config();
 
@@ -29,6 +34,15 @@ app.use("/api/agents", agentsRouter);
 app.use("/api/markets", marketsRouter);
 app.use("/api/voice", voiceRouter);
 app.use("/api/livekit", livekitRouter);
+
+app.use("/api/activities", activitiesRouter);
+
+
+
+
+
+
+
 
 // Groq init (non-blocking)
 try {

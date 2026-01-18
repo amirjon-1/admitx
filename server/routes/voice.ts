@@ -1,22 +1,20 @@
 import { Router, Request, Response } from "express";
+import fs from "fs";
+import path from "path";
 import { runAgent, extractStoryThreads } from "../services/agents";
 
 export const voiceRouter = Router();
 
 type HistoryTurn = { role: "user" | "assistant"; text: string };
 
-// Pull a usable text reply out of whatever runAgent returns
 function normalizeAgentReply(result: unknown): string {
   if (!result) return "";
 
-  // If runAgent returns a string, we’re done
   if (typeof result === "string") return result.trim();
 
-  // If runAgent returns an object, try common fields
   if (typeof result === "object") {
     const r: any = result;
 
-    // Most common candidates
     const candidates = [
       r.reply,
       r.text,
@@ -31,11 +29,9 @@ function normalizeAgentReply(result: unknown): string {
       if (typeof c === "string" && c.trim()) return c.trim();
     }
 
-    // If it has nested structures, try to find any string leaf that looks like an answer
-    // (keep this minimal so it doesn't get weird)
+    // if it returned JSON-ish, try to pick out a feedback field
     try {
       const asString = JSON.stringify(r);
-      // If it looks like JSON but contains "feedback":"...", try to extract that quickly
       const m = asString.match(/"feedback"\s*:\s*"([^"]+)"/);
       if (m?.[1]) return m[1].replace(/\\n/g, "\n").trim();
     } catch {
@@ -43,7 +39,6 @@ function normalizeAgentReply(result: unknown): string {
     }
   }
 
-  // Last resort
   return String(result).trim();
 }
 
@@ -72,8 +67,8 @@ voiceRouter.post("/interview", async (req: Request, res: Response) => {
 You are an expert college admissions advisor doing a live interview.
 
 Rules:
-- Ask 1 strong follow-up question at a time.
-- Give short, practical feedback.
+- Ask exactly 1 strong follow-up question at a time.
+- Give short, practical feedback (not generic).
 - Collect details: grade, GPA (weighted/unweighted), courses (AP/IB/honors), SAT/ACT, activities, awards, leadership, volunteering, work, intended major, and story moments.
 - Be supportive and clear (no fluff).
 - Keep responses under ~120 words unless asked for more.
@@ -101,6 +96,48 @@ Now reply as the Advisor:
 });
 
 /**
+ * POST /api/voice/save
+ * body: { sessionId: string, transcript: { role, text, ts? }[] }
+ * writes: server/data/interviews/<sessionId>.json
+ */
+const DATA_DIR = path.join(process.cwd(), "server", "data", "interviews");
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+
+voiceRouter.post("/save", async (req: Request, res: Response) => {
+  try {
+    const { sessionId, transcript } = req.body as {
+      sessionId?: string;
+      transcript?: Array<{ role: "user" | "assistant"; text: string; ts?: number }>;
+    };
+
+    if (!sessionId) return res.status(400).json({ error: "sessionId required" });
+    if (!Array.isArray(transcript))
+      return res.status(400).json({ error: "transcript must be an array" });
+
+    const filePath = path.join(DATA_DIR, `${sessionId}.json`);
+
+    const existing = fs.existsSync(filePath)
+      ? JSON.parse(fs.readFileSync(filePath, "utf8"))
+      : null;
+
+    const base = existing ?? {
+      sessionId,
+      createdAt: new Date().toISOString(),
+      transcript: [],
+    };
+
+    base.transcript = transcript;
+
+    fs.writeFileSync(filePath, JSON.stringify(base, null, 2), "utf8");
+
+    return res.json({ ok: true, saved: `${sessionId}.json` });
+  } catch (err: any) {
+    console.error("voice/save error:", err);
+    return res.status(500).json({ error: err?.message ?? "save failed" });
+  }
+});
+
+/**
  * OPTIONAL: story extraction
  * POST /api/voice/extract-stories
  * body: { transcript: string }
@@ -115,7 +152,9 @@ voiceRouter.post("/extract-stories", async (req: Request, res: Response) => {
     return res.json(stories);
   } catch (err: any) {
     console.error("voice/extract-stories error:", err);
-    return res.status(500).json({ error: err?.message ?? "Failed to extract stories" });
+    return res.status(500).json({
+      error: err?.message ?? "Failed to extract stories",
+    });
   }
 });
 

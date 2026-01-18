@@ -1,42 +1,48 @@
-import Groq from 'groq-sdk';
+import Groq from "groq-sdk";
 
 let groq: Groq | null = null;
 
-// Initialize Groq - will be called after env vars are loaded
+// -------------------- Groq init --------------------
 export function initializeGroq() {
-  console.log('Initializing Groq with API key:', process.env.GROQ_API_KEY ? `${process.env.GROQ_API_KEY.substring(0, 10)}...` : 'NOT SET');
+  console.log(
+    "Initializing Groq with API key:",
+    process.env.GROQ_API_KEY
+      ? `${process.env.GROQ_API_KEY.substring(0, 10)}...`
+      : "NOT SET"
+  );
 
   if (!process.env.GROQ_API_KEY) {
-    throw new Error('GROQ_API_KEY is not set in environment variables');
+    throw new Error("GROQ_API_KEY is not set in environment variables");
   }
 
-  groq = new Groq({
-    apiKey: process.env.GROQ_API_KEY,
-  });
-  console.log('✅ Groq instance created and configured');
+  groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+  console.log("✅ Groq instance created and configured");
 }
 
 export async function verifyGroqConnection(): Promise<boolean> {
   try {
     if (!groq) {
-      console.error('❌ Groq instance not initialized');
+      console.error("❌ Groq instance not initialized");
       return false;
     }
-    // Make a simple test call
-    console.log('Testing Groq connection...');
-    const response = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
-      messages: [{role: 'user', content: 'test'}],
+
+    console.log("Testing Groq connection...");
+    await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [{ role: "user", content: "test" }],
       max_tokens: 10,
     });
-    console.log('✅ Test API call succeeded, received response');
+
+    console.log("✅ Test API call succeeded");
     return true;
   } catch (error) {
     const msg = error instanceof Error ? error.message : JSON.stringify(error);
-    console.error('❌ Groq connection test failed:', msg);
+    console.error("❌ Groq connection test failed:", msg);
     return false;
   }
 }
+
+// -------------------- Prompts --------------------
 const AGENT_PROMPTS = {
   story: `Analyze THIS essay's narrative. Be DIRECT and CONCISE.
 
@@ -82,7 +88,38 @@ Keep it SHORT.`,
 3. **Remove**: [One thing to cut or avoid]
 
 That's it. Direct and done.`,
+
+  // ✅ JSON-only activities generator
+  activities: `You generate a Common App Activities List from interview notes.
+
+OUTPUT RULES (MUST FOLLOW):
+- Return VALID JSON ONLY. No markdown. No explanation. No extra keys.
+- Return exactly this shape:
+{
+  "activities": [
+    {
+      "position_title": "",
+      "organization": "",
+      "description": "",
+      "years": "",
+      "hours_per_week": 0,
+      "weeks_per_year": 0
+    }
+  ]
+}
+
+CONSTRAINTS:
+- position_title <= 50 chars
+- organization <= 50 chars
+- description <= 150 chars (action + impact, no fluff)
+- years format: "9-11" or "11"
+- hours_per_week: number
+- weeks_per_year: number
+- Max 10 activities
+- Do NOT invent awards/results. If missing numbers, use conservative reasonable estimates.`,
 };
+
+export type AgentType = keyof typeof AGENT_PROMPTS;
 
 export interface AgentFeedback {
   type: string;
@@ -90,98 +127,83 @@ export interface AgentFeedback {
   score?: number;
 }
 
-async function callGroq(systemPrompt: string, userContent: string): Promise<string> {
-  console.log('🔍 callGroq called');
-  console.log('groq instance exists:', !!groq);
-  console.log('groq type:', groq?.constructor?.name);
-  
-  try {
-    if (!groq) {
-      throw new Error('Groq client not initialized. Check that GROQ_API_KEY is set in .env');
-    }
-    
-    const prompt = `${systemPrompt}\n\n---\n\nUser Input:\n${userContent}`;
-    
-    console.log('📤 Calling Groq API with model: llama-3.3-70b-versatile');
-    const message = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      model: 'llama-3.3-70b-versatile',
-      max_tokens: 1024,
-    });
-    
-    const text = message.choices[0]?.message?.content || '';
-    console.log('✅ Groq response received, length:', text.length);
-    return text;
-  } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
-    console.error('❌ Groq API error:', errorMsg);
-    if (error instanceof Error && 'status' in error) {
-      console.error('HTTP Status:', (error as any).status);
-    }
-    throw new Error(`Groq API failed: ${errorMsg}`);
+// -------------------- Groq call helper --------------------
+async function callGroq(
+  systemPrompt: string,
+  userContent: string
+): Promise<string> {
+  if (!groq) {
+    throw new Error("Groq client not initialized. Check GROQ_API_KEY in .env");
   }
+
+  const resp = await groq.chat.completions.create({
+    model: "llama-3.3-70b-versatile",
+    max_tokens: 1024,
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userContent },
+    ],
+  });
+
+  const text = resp.choices[0]?.message?.content ?? "";
+  return text.trim();
 }
 
+// -------------------- Single agent (always returns string) --------------------
 export async function runAgent(
-  agentType: keyof typeof AGENT_PROMPTS,
-  essay: string,
+  agentType: AgentType,
+  input: string,
   additionalContext?: string
-): Promise<AgentFeedback> {
-  try {
-    console.log(`Running ${agentType} agent...`);
-    const systemPrompt = AGENT_PROMPTS[agentType];
+): Promise<string> {
+  console.log(`Running ${agentType} agent...`);
 
-    let userContent = `Analyze this college essay:\n\n${essay}`;
-    if (additionalContext) {
-      userContent += `\n\nAdditional context:\n${additionalContext}`;
-    }
+  const systemPrompt = AGENT_PROMPTS[agentType];
+  const isJsonOnly = agentType === "activities";
 
-    const feedbackText = await callGroq(systemPrompt, userContent);
+  let userContent = isJsonOnly ? input : `Analyze this college essay:\n\n${input}`;
 
-    // Extract score for authenticity agent
-    let score: number | undefined;
-    if (agentType === 'authenticity') {
-      const scoreMatch = feedbackText.match(/(?:Authenticity\s*Score|Score)[:\s]*(\d{1,3})(?:\/100)?/i);
-      if (scoreMatch) {
-        score = Math.min(100, Math.max(1, parseInt(scoreMatch[1])));
-      } else {
-        // Default score if not found
-        score = 75;
-      }
-    }
-
-    return {
-      type: agentType,
-      feedback: feedbackText,
-      score,
-    };
-  } catch (error) {
-    console.error(`Error running ${agentType} agent:`, error);
-    throw error;
+  if (additionalContext) {
+    userContent += `\n\nAdditional context:\n${additionalContext}`;
   }
+
+  return await callGroq(systemPrompt, userContent);
 }
 
-export async function runMultiAgentAnalysis(essay: string): Promise<{
+// -------------------- Multi-agent orchestrator --------------------
+export async function runMultiAgentAnalysis(
+  input: string
+): Promise<{
   story: AgentFeedback;
   admissions: AgentFeedback;
   technical: AgentFeedback;
   authenticity: AgentFeedback;
   synthesis: AgentFeedback;
 }> {
-  // Run first 4 agents in parallel
-  const [story, admissions, technical, authenticity] = await Promise.all([
-    runAgent('story', essay),
-    runAgent('admissions', essay),
-    runAgent('technical', essay),
-    runAgent('authenticity', essay),
-  ]);
+  const [storyText, admissionsText, technicalText, authenticityText] =
+    await Promise.all([
+      runAgent("story", input),
+      runAgent("admissions", input),
+      runAgent("technical", input),
+      runAgent("authenticity", input),
+    ]);
 
-  // Prepare context for synthesis
+  const story: AgentFeedback = { type: "story", feedback: storyText };
+  const admissions: AgentFeedback = { type: "admissions", feedback: admissionsText };
+  const technical: AgentFeedback = { type: "technical", feedback: technicalText };
+
+  // Extract score for authenticity
+  let score = 75;
+  const m = authenticityText.match(
+    /(?:Authenticity\s*Score|Score)[:\s]*(\d{1,3})(?:\/100)?/i
+  );
+  if (m) score = Math.min(100, Math.max(1, parseInt(m[1], 10)));
+
+  const authenticity: AgentFeedback = {
+    type: "authenticity",
+    feedback: authenticityText,
+    score,
+  };
+
   const synthesisContext = `
 Story Agent Feedback:
 ${story.feedback}
@@ -194,20 +216,15 @@ ${technical.feedback}
 
 Authenticity Agent Feedback:
 ${authenticity.feedback}
-`;
+`.trim();
 
-  // Run synthesis agent
-  const synthesis = await runAgent('synthesis', essay, synthesisContext);
+  const synthesisText = await runAgent("synthesis", input, synthesisContext);
+  const synthesis: AgentFeedback = { type: "synthesis", feedback: synthesisText };
 
-  return {
-    story,
-    admissions,
-    technical,
-    authenticity,
-    synthesis,
-  };
+  return { story, admissions, technical, authenticity, synthesis };
 }
 
+// -------------------- Story thread extraction --------------------
 export async function extractStoryThreads(transcript: string): Promise<{
   threads: Array<{
     id: string;
@@ -219,24 +236,15 @@ export async function extractStoryThreads(transcript: string): Promise<{
     quotes: string[];
   }>;
 }> {
-  try {
-    const systemPrompt = `You are an expert at extracting meaningful personal stories from interview transcripts for college essays.
-Your job is to identify distinct story threads that could become compelling college essays.`;
+  const systemPrompt = `You are an expert at extracting meaningful personal stories from interview transcripts for college essays.
+Identify distinct story threads that could become compelling college essays.`;
 
-    const userContent = `Analyze this interview transcript and extract meaningful personal stories.
+  const userContent = `Analyze this interview transcript and extract meaningful personal stories.
 
 Transcript:
 ${transcript}
 
-For each story, identify:
-1. A compelling title
-2. The core narrative (2-3 sentences)
-3. Key moment/turning point
-4. Character traits revealed
-5. Potential essay themes
-6. Memorable quotes (verbatim from transcript)
-
-Return as JSON only (no markdown code blocks):
+Return JSON only:
 {
   "threads": [
     {
@@ -244,28 +252,22 @@ Return as JSON only (no markdown code blocks):
       "title": "...",
       "narrative": "...",
       "keyMoment": "...",
-      "traits": ["...", "..."],
-      "themes": ["...", "..."],
-      "quotes": ["...", "..."]
+      "traits": ["..."],
+      "themes": ["..."],
+      "quotes": ["..."]
     }
   ]
-}`;
+}`.trim();
 
-    const text = await callGroq(systemPrompt, userContent);
+  const text = await callGroq(systemPrompt, userContent);
 
-    // Extract JSON from response
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
-    }
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (jsonMatch) return JSON.parse(jsonMatch[0]);
 
-    return { threads: [] };
-  } catch (error) {
-    console.error('Error extracting story threads:', error);
-    throw error;
-  }
+  return { threads: [] };
 }
 
+// -------------------- Odds calculator --------------------
 export async function calculateInitialOdds(
   profile: {
     gpa: number;
@@ -279,33 +281,26 @@ export async function calculateInitialOdds(
   schoolName: string
 ): Promise<number> {
   try {
-    const systemPrompt = `You are an expert at predicting college admission outcomes based on student profiles.`;
+    const systemPrompt = `You predict college admission outcomes based on student profiles.`;
 
-    const userContent = `Estimate the admission probability for this profile to ${schoolName}:
+    const userContent = `Estimate admission probability for ${schoolName}.
 
 GPA: ${profile.gpa}
-Test Score: ${profile.testScore} (${profile.testType})
-APs: ${profile.apCount}
+Test: ${profile.testScore} (${profile.testType})
+AP count: ${profile.apCount}
 ECs: ${JSON.stringify(profile.ecSummary)}
 Essay Score: ${profile.essayScore}/100
 State: ${profile.demographics.state}
 First-Gen: ${profile.demographics.firstGen}
 URM: ${profile.demographics.urm}
 
-Consider:
-- School's acceptance rate and selectivity
-- Profile competitiveness
-- Geographic diversity
-- Demographic factors
-- EC strength and tier
-
-Return ONLY a number 1-100 representing probability. No explanation.`;
+Return ONLY a number 1-100. No explanation.`.trim();
 
     const text = await callGroq(systemPrompt, userContent);
     const match = text.match(/\d+/);
-    return match ? Math.min(100, Math.max(1, parseInt(match[0]))) : 50;
+    return match ? Math.min(100, Math.max(1, parseInt(match[0], 10))) : 50;
   } catch (error) {
-    console.error('Error calculating initial odds:', error);
-    return 50; // Default to 50% on error
+    console.error("Error calculating initial odds:", error);
+    return 50;
   }
 }
