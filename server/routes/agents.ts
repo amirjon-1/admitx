@@ -1,111 +1,137 @@
-import { Router, Request, Response } from 'express';
-import { runAgent, runMultiAgentAnalysis, extractStoryThreads, calculateInitialOdds } from '../services/agents';
+import { Router, Request, Response } from "express";
+import {
+  runAgent,
+  runMultiAgentAnalysis,
+  extractStoryThreads,
+  calculateInitialOdds,
+} from "../services/agents";
 
 export const agentsRouter = Router();
 
-// Single agent analysis
-agentsRouter.post('/story', async (req: Request, res: Response) => {
+function requireBodyField(req: Request, res: Response, field: string): string | null {
+  const value = (req.body as any)?.[field];
+
+  if (typeof value !== "string" || value.trim().length === 0) {
+    res.status(400).json({ error: `${field} is required` });
+    return null;
+  }
+
+  return value.trim();
+}
+
+async function handleAgent(
+  req: Request,
+  res: Response,
+  agentName: string,
+  fieldName: string = "essay"
+) {
   try {
-    const { essay } = req.body;
-    if (!essay) {
-      return res.status(400).json({ error: 'Essay is required' });
+    const input = requireBodyField(req, res, fieldName);
+    if (!input) return;
+
+    console.log(`🤖 Agent "${agentName}" running. Length:`, input.length);
+    const output = await runAgent(agentName as any, input);
+
+    // Always respond as JSON
+    return res.json(output);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error(`❌ Agent "${agentName}" error:`, msg, error);
+    return res.status(500).json({
+      error: `Failed to run ${agentName} agent`,
+      details: msg,
+    });
+  }
+}
+
+// ---------- Single agent analysis ----------
+agentsRouter.post("/story", (req, res) => handleAgent(req, res, "story"));
+agentsRouter.post("/admissions", (req, res) => handleAgent(req, res, "admissions"));
+agentsRouter.post("/technical", (req, res) => handleAgent(req, res, "technical"));
+agentsRouter.post("/authenticity", (req, res) => handleAgent(req, res, "authenticity"));
+
+/**
+ * ✅ Activities generator (JSON-only prompt)
+ * POST /api/agents/activities
+ * body: { prompt: string }
+ */
+agentsRouter.post("/activities", async (req, res) => {
+  try {
+    const prompt = requireBodyField(req, res, "prompt");
+    if (!prompt) return;
+
+    const raw = await runAgent("activities", String(prompt)); // <-- returns string
+    const text = typeof raw === "string" ? raw : JSON.stringify(raw);
+
+    // Parse the JSON string into an object
+    let parsed: any;
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      return res.status(500).json({
+        error: "Activities agent did not return valid JSON",
+        raw: text,
+      });
     }
-    console.log('Story agent analyzing essay of length:', essay.length);
-    const feedback = await runAgent('story', essay);
-    res.json(feedback);
+
+    // Ensure we return a clean shape
+    const activities = Array.isArray(parsed?.activities) ? parsed.activities : [];
+    return res.json({ activities });
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
-    console.error('Story agent error:', errorMsg, error);
-    res.status(500).json({ error: 'Failed to analyze essay', details: errorMsg });
+    console.error("Activities agent error:", errorMsg, error);
+    res.status(500).json({ error: "Failed to generate activities", details: errorMsg });
   }
 });
 
-agentsRouter.post('/admissions', async (req: Request, res: Response) => {
-  try {
-    const { essay } = req.body;
-    if (!essay) {
-      return res.status(400).json({ error: 'Essay is required' });
-    }
-    console.log('Admissions agent analyzing essay of length:', essay.length);
-    const feedback = await runAgent('admissions', essay);
-    res.json(feedback);
-  } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : String(error);
-    console.error('Admissions agent error:', errorMsg, error);
-    res.status(500).json({ error: 'Failed to analyze essay', details: errorMsg });
-  }
-});
 
-agentsRouter.post('/technical', async (req: Request, res: Response) => {
+// ---------- Full multi-agent analysis ----------
+agentsRouter.post("/orchestrate", async (req, res) => {
   try {
-    const { essay } = req.body;
-    if (!essay) {
-      return res.status(400).json({ error: 'Essay is required' });
-    }
-    console.log('Technical agent analyzing essay of length:', essay.length);
-    const feedback = await runAgent('technical', essay);
-    res.json(feedback);
-  } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : String(error);
-    console.error('Technical agent error:', errorMsg, error);
-    res.status(500).json({ error: 'Failed to analyze essay', details: errorMsg });
-  }
-});
+    const essay = requireBodyField(req, res, "essay");
+    if (!essay) return;
 
-agentsRouter.post('/authenticity', async (req: Request, res: Response) => {
-  try {
-    const { essay } = req.body;
-    if (!essay) {
-      return res.status(400).json({ error: 'Essay is required' });
-    }
-    console.log('Authenticity agent analyzing essay of length:', essay.length);
-    const feedback = await runAgent('authenticity', essay);
-    res.json(feedback);
-  } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : String(error);
-    console.error('Authenticity agent error:', errorMsg, error);
-    res.status(500).json({ error: 'Failed to analyze essay', details: errorMsg });
-  }
-});
-
-// Full multi-agent analysis
-agentsRouter.post('/orchestrate', async (req: Request, res: Response) => {
-  try {
-    const { essay } = req.body;
-    if (!essay) {
-      return res.status(400).json({ error: 'Essay is required' });
-    }
     const results = await runMultiAgentAnalysis(essay);
-    res.json(results);
+    return res.json(results);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to run multi-agent analysis' });
+    const msg = error instanceof Error ? error.message : String(error);
+    return res.status(500).json({ error: "Failed to run multi-agent analysis", details: msg });
   }
 });
 
-// Story extraction from voice interview
-agentsRouter.post('/extract-stories', async (req: Request, res: Response) => {
+// ---------- Story extraction ----------
+agentsRouter.post("/extract-stories", async (req, res) => {
   try {
-    const { transcript } = req.body;
-    if (!transcript) {
-      return res.status(400).json({ error: 'Transcript is required' });
-    }
+    const transcript = requireBodyField(req, res, "transcript");
+    if (!transcript) return;
+
     const stories = await extractStoryThreads(transcript);
-    res.json(stories);
+    return res.json(stories);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to extract stories' });
+    const msg = error instanceof Error ? error.message : String(error);
+    return res.status(500).json({ error: "Failed to extract stories", details: msg });
   }
 });
 
-// Calculate admission odds
-agentsRouter.post('/calculate-odds', async (req: Request, res: Response) => {
+// ---------- Odds ----------
+agentsRouter.post("/calculate-odds", async (req, res) => {
   try {
-    const { profile, schoolName } = req.body;
-    if (!profile || !schoolName) {
-      return res.status(400).json({ error: 'Profile and school name are required' });
+    const profile = (req.body as any)?.profile;
+    const schoolName = (req.body as any)?.schoolName;
+
+    if (!profile || typeof schoolName !== "string" || !schoolName.trim()) {
+      return res.status(400).json({ error: "profile and schoolName are required" });
     }
-    const odds = await calculateInitialOdds(profile, schoolName);
-    res.json({ odds });
+
+    const odds = await calculateInitialOdds(profile, schoolName.trim());
+    return res.json({ odds });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to calculate odds' });
+    const msg = error instanceof Error ? error.message : String(error);
+    return res.status(500).json({ error: "Failed to calculate odds", details: msg });
   }
+});
+
+// ---------- Quick health ----------
+agentsRouter.get("/health", (_req, res) => {
+  res.json({ ok: true });
 });

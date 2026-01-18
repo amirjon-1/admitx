@@ -25,6 +25,9 @@ export async function ensureUserRow(user: Pick<User, 'id' | 'email' | 'username'
 export async function signInWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
+    options: {
+      redirectTo: window.location.origin,
+    },
   });
   if (error) throw error;
   return data;
@@ -557,4 +560,48 @@ export async function upsertHonor(userId: string, honor: Honor) {
 export async function deleteHonor(id: string) {
   const { error } = await supabase.from('honors').delete().eq('id', id);
   if (error) throw error;
+}
+
+// Voice Interviews
+export interface VoiceInterviewRecord {
+  id: string;
+  user_id: string;
+  audio_url: string | null;
+  transcript: string;
+  duration_seconds: number | null;
+  story_threads: unknown | null;
+  created_at: string;
+}
+
+export async function fetchLatestVoiceInterview(userId: string): Promise<VoiceInterviewRecord | null> {
+  console.log('Fetching voice interview via direct fetch for user_id:', userId);
+
+  const url = `${supabaseUrl}/rest/v1/voice_interviews?select=*&user_id=eq.${userId}&order=created_at.desc&limit=1`;
+
+  const response = await fetch(url, {
+    headers: {
+      'apikey': supabaseAnonKey,
+      'Authorization': `Bearer ${supabaseAnonKey}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  console.log('Fetch response status:', response.status);
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Error fetching voice interview:', errorText);
+    throw new Error(`Failed to fetch voice interview: ${response.status}`);
+  }
+
+  const data = await response.json();
+  console.log('Fetch response data:', data);
+
+  if (!data || data.length === 0) {
+    console.log('No interviews found');
+    return null;
+  }
+
+  console.log('Found interview');
+  return data[0];
 }
