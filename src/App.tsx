@@ -32,7 +32,7 @@ function App() {
 
     init();
 
-    const { data: subscription } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: subscription } = supabase.auth.onAuthStateChange(async (event, session) => {
       const user = session?.user;
       if (user) {
         setUser({ id: user.id, email: user.email || '', username: user.user_metadata?.name || '', credits: 1000, createdAt: new Date() });
@@ -47,7 +47,8 @@ function App() {
         setEssays(essays.length ? essays : current.essays);
         setActivities(activities.length ? activities : current.activities);
         setHonors(honors.length ? honors : current.honors);
-      } else {
+      } else if (event === 'SIGNED_OUT') {
+        // Only clear on explicit sign-out; preserve cache on initial null session
         setUser(null);
         setColleges([]);
         setEssays([]);
@@ -59,7 +60,7 @@ function App() {
     return () => {
       subscription?.subscription.unsubscribe();
     };
-  }, [setUser, setColleges, setEssays]);
+  }, [setUser, setColleges, setEssays, setActivities, setHonors]);
 
   return (
     <BrowserRouter>
