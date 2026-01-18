@@ -192,7 +192,7 @@ export function Dashboard() {
                   onClick={() => window.location.href = '/essays'}
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  New Essay
+                  New Essay.
                 </Button>
                 <Button
                   variant="outline"
