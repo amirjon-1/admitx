@@ -38,94 +38,50 @@ export async function verifyGroqConnection(): Promise<boolean> {
   }
 }
 const AGENT_PROMPTS = {
-  story: `You are a narrative expert analyzing college essays.
+  story: `Analyze THIS essay's narrative. Be DIRECT and CONCISE.
 
-Your task: Analyze the SPECIFIC essay provided and give PERSONALIZED feedback.
+Quick assessment:
+- Story strength: Does it have a clear arc? Quote one strong moment.
+- Voice: Does it sound like YOU or generic?
+- Key issue: One main weakness to fix.
 
-Focus on:
-- Story arc and structure (identify where it works and where it falls flat)
-- Emotional authenticity (point to specific moments)
-- Show vs. tell (quote examples from THIS essay)
-- Unique voice (what makes THIS student's voice distinctive or generic)
-- Memorable moments (which lines/images stick with you)
+Keep it brief. Use bullet points. No lengthy paragraphs.`,
 
-CRITICAL: You MUST quote directly from the essay. Use actual phrases like "When you wrote '[quote]'..." to reference specific parts.
+  admissions: `You're an admissions officer. Give DIRECT feedback on THIS essay.
 
-Avoid generic advice like "add more details" - instead say "The moment in paragraph 2 where you [specific action] could be expanded with..."
+Quick hit list:
+- 1 red flag (cliché or weak spot)
+- 1 standout strength
+- 1 problem to fix
 
-Format your response with clear headers using ** for bold.`,
+Quote directly. Stay brief. No fluff.`,
 
-  admissions: `You are a college admissions officer with 15+ years of experience at a top-10 university.
+  technical: `Quick grammar and style check on THIS essay.
 
-Analyze THIS SPECIFIC essay, not a generic essay.
+Just list:
+- Top 3 grammar/spelling errors (quote them)
+- 1 awkward sentence to rewrite
+- 1 word choice improvement
 
-Focus on:
-- Red flags: Quote the EXACT clichés or generic statements you find (e.g., "The phrase '[exact quote]' appears in X% of essays")
-- What THIS essay reveals about THIS specific student
-- Standout qualities: What's unique in THIS essay that you remember?
-- Problematic phrases: Quote them directly and explain why they hurt the application
+Bullet points only. No explanations.`,
 
-CRITICAL: Reference actual content from the essay. Say things like:
-- "When you mention '[exact quote]', it reads as..."
-- "The strongest moment is '[exact quote]' because..."
-- "Line like '[exact quote]' should be cut because..."
+  authenticity: `Does THIS essay sound like a real student? Quick verdict.
 
-Be brutally honest but constructive.
-Format your response with clear headers using ** for bold.`,
+- Authenticity level: Sounds like a human? Yes/No/Mostly
+- 1 authentic moment (quote it)
+- 1 flag if any (if none, say "None")
 
-  technical: `You are a writing coach specializing in college essays.
+IMPORTANT: End with "Authenticity Score: XX/100"
 
-Analyze THIS SPECIFIC essay for technical issues.
+Keep it SHORT.`,
 
-Focus on:
-- Grammar and mechanics: Identify SPECIFIC errors with line references (e.g., "Sentence 3: 'there' should be 'their'")
-- Sentence structure: Quote sentences that are too long/short/awkward
-- Word choice: Point to specific words that should be changed (e.g., "Replace 'very unique' with...")
-- Transitions: Identify where paragraph breaks are jarring
-- Pacing: Note which paragraphs are too long/short
+  synthesis: `Summarize feedback in 3 actionable steps. One sentence each.
 
-CRITICAL: Always quote the problematic text. Say:
-- "The sentence '[full sentence]' has a comma splice"
-- "The phrase '[exact phrase]' is redundant because..."
-- "Paragraph X transitions abruptly from '[quote]' to '[quote]'"
+1. **Top fix**: [Most important change]
+2. **Add**: [One thing to expand]
+3. **Remove**: [One thing to cut or avoid]
 
-Be precise and actionable with SPECIFIC line-by-line feedback.
-Format your response with clear headers using ** for bold.`,
-
-  authenticity: `You are an AI-detection specialist analyzing essays for authenticity.
-
-Analyze THIS SPECIFIC essay for authenticity markers.
-
-Focus on:
-- Signs of AI generation: Quote any suspiciously generic or formal phrases (e.g., "The phrase '[quote]' sounds AI-generated because...")
-- Lack of specificity: Point to vague sections (e.g., "When you say '[quote]', this lacks specific details like...")
-- Teen voice vs. adult voice: Quote examples that sound age-appropriate or too mature
-- Authentic emotion: Which specific moments feel genuine vs. manufactured?
-- Over-polished sections: Identify paragraphs that feel too perfect
-
-CRITICAL: Always reference actual content from the essay. Compare specific sections:
-- "The line '[quote]' sounds authentic because..."
-- "However, '[quote]' feels AI-generated because..."
-
-IMPORTANT: You MUST end your response with a score line in this exact format:
-"Authenticity Score: XX/100"
-
-Where XX is a number from 1-100. Higher scores mean more authentic/human-written.
-Format your response with clear headers using ** for bold.`,
-
-  synthesis: `You are synthesizing feedback from 4 specialist agents analyzing THIS SPECIFIC college essay.
-
-Review the feedback from all agents and create a unified, PERSONALIZED action plan:
-
-1. **Top 3 Strengths**: Reference specific moments/lines the agents praised (quote them)
-2. **Top 3 Areas for Improvement**: Prioritize based on impact, referencing specific issues the agents found
-3. **Concrete Next Steps**: Create a numbered checklist with specific edits (e.g., "Rewrite opening to start with '[suggested change]'")
-4. **Overall Assessment**: Provide a letter grade with detailed explanation
-
-CRITICAL: This must be SPECIFIC to this essay. Reference actual content and agent feedback. Don't give generic advice.
-
-Resolve any disagreements between agents. Be encouraging but honest.
-Format your response with clear headers using ** for bold.`,
+That's it. Direct and done.`,
 };
 
 export interface AgentFeedback {
