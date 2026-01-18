@@ -1,4 +1,19 @@
-const API_BASE = import.meta.env.VITE_API_URL;
+// Get API base URL - add /api if it's a full URL, otherwise use relative path
+const getApiBase = () => {
+  const apiUrl = import.meta.env.VITE_API_URL;
+  if (!apiUrl) {
+    // No API URL set - use relative path (for Vercel serverless functions)
+    return '/api';
+  }
+  if (apiUrl.startsWith('http')) {
+    // Full URL - ensure it ends with /api
+    return apiUrl.endsWith('/api') ? apiUrl : `${apiUrl}/api`;
+  }
+  // Relative path - ensure it starts with /
+  return apiUrl.startsWith('/') ? apiUrl : `/${apiUrl}`;
+};
+
+const API_BASE = getApiBase();
 
 export interface AgentFeedback {
   type: string;
