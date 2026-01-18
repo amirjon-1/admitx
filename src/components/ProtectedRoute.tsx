@@ -7,6 +7,7 @@ export function ProtectedRoute() {
   const { user } = useStore();
   const location = useLocation();
   const [isChecking, setIsChecking] = useState(true);
+  const [hasSession, setHasSession] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -24,6 +25,7 @@ export function ProtectedRoute() {
       // If user exists in store, we're done
       if (user) {
         clearTimeout(timeoutId);
+        setHasSession(true);
         setIsChecking(false);
         return;
       }
@@ -42,10 +44,11 @@ export function ProtectedRoute() {
           clearTimeout(timeoutId);
           if (session?.user) {
             // Session exists - allow access, App.tsx will load user data
-            // Don't wait for user to be in store, just allow the route
+            setHasSession(true);
             setIsChecking(false);
           } else {
-            // No session - will redirect to home
+            // No session
+            setHasSession(false);
             setIsChecking(false);
           }
         }
@@ -53,6 +56,7 @@ export function ProtectedRoute() {
         console.error('Auth check error:', error);
         if (isMounted) {
           clearTimeout(timeoutId);
+          setHasSession(false);
           setIsChecking(false);
         }
       }
@@ -77,7 +81,9 @@ export function ProtectedRoute() {
     );
   }
 
-  if (!user) {
+  // Allow access if user is in store OR if we have a valid session
+  // This prevents sign-out on refresh when session exists but user not yet loaded
+  if (!user && !hasSession) {
     // Store the attempted location so we can redirect back after login
     return <Navigate to="/" state={{ from: location }} replace />;
   }

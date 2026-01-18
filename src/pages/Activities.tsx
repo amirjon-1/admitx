@@ -222,7 +222,13 @@ export function Activities() {
       console.log("4. Sending to backend...");
 
       // Send transcript to backend for activity and honors generation
-      const res = await fetch("/api/activities/generate", {
+      const API_BASE = import.meta.env.VITE_API_URL 
+        ? (import.meta.env.VITE_API_URL.endsWith('/api') 
+            ? import.meta.env.VITE_API_URL 
+            : `${import.meta.env.VITE_API_URL}/api`)
+        : '/api';
+      
+      const res = await fetch(`${API_BASE}/activities/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ transcript: interview.transcript }),
