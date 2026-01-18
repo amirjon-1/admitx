@@ -1,65 +1,52 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import { agentsRouter } from './routes/agents';
-import { initializeGroq, verifyGroqConnection } from './services/agents';
-import { marketsRouter } from './routes/markets';
-import { voiceRouter } from './routes/voice';
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+
+import { agentsRouter } from "./routes/agents";
+import { marketsRouter } from "./routes/markets";
+import { voiceRouter } from "./routes/voice";
+import livekitRouter from "./routes/livekit";
+import { initializeGroq, verifyGroqConnection } from "./services/agents";
 
 dotenv.config();
-
-// Initialize Groq API client with environment variables
-try {
-  initializeGroq();
-  console.log('✅ Groq API initialized successfully');
-  
-  // Verify connection
-  verifyGroqConnection().then(isConnected => {
-    if (isConnected) {
-      console.log('✅ Groq API connection verified');
-    } else {
-      console.error('❌ Groq API connection failed');
-    }
-  });
-} catch (error) {
-  console.error('❌ Failed to initialize Groq API:', error instanceof Error ? error.message : error);
-}
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: "10mb" }));
 
-// Request logging middleware
-app.use((req, res, next) => {
-  console.log(`📨 Request: ${req.method} ${req.path}`);
+app.use((req, _res, next) => {
+  console.log(`📨 ${req.method} ${req.path}`);
   next();
 });
 
-// Health check
-app.get('/api/health', (req, res) => {
-  console.log('Health check called');
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+app.get("/api/health", (_req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// Routes
-console.log('Registering /api/agents route');
-app.use('/api/agents', agentsRouter);
-console.log('Registering /api/markets route');
-app.use('/api/markets', marketsRouter);
-console.log('Registering /api/voice route');
-app.use('/api/voice', voiceRouter);
+app.use("/api/agents", agentsRouter);
+app.use("/api/markets", marketsRouter);
+app.use("/api/voice", voiceRouter);
+app.use("/api/livekit", livekitRouter);
 
-// Error handling
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+// Groq init (non-blocking)
+try {
+  initializeGroq();
+  console.log("✅ Groq API initialized successfully");
+  verifyGroqConnection()
+    .then((ok) => console.log(ok ? "✅ Groq verified" : "❌ Groq verify failed"))
+    .catch((e) => console.error("❌ Groq verify error:", e));
+} catch (e) {
+  console.error("❌ Groq init error:", e);
+}
+
+// last
+app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+  res.status(500).json({ error: "Something went wrong!" });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 export default app;
