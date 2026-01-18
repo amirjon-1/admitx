@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Modal, Button, Input, Select } from '../ui';
 import { generateId } from '../../lib/utils';
 import type { College } from '../../types';
+import { useStore } from '../../store/useStore';
 
 import collegeDeadlines from '../../data/college_deadlines.json';
 import collegeDecisions from '../../data/college_decisions.json';
@@ -22,6 +23,7 @@ const DECISION_LABELS: Record<string, string> = {
 };
 
 export function AddCollegeModal({ isOpen, onClose, onAdd }: AddCollegeModalProps) {
+  const { user } = useStore();
   const [name, setName] = useState('');
   const [decisionType, setDecisionType] = useState('RD');
   const [deadline, setDeadline] = useState('');
@@ -54,8 +56,9 @@ export function AddCollegeModal({ isOpen, onClose, onAdd }: AddCollegeModalProps
     setIsSubmitting(true);
 
     onAdd({
-      id: generateId(),
-      userId: 'demo-user',
+      // Use a real UUID when signed-in so Supabase accepts the insert
+      id: user?.id ? crypto.randomUUID() : generateId(),
+      userId: user?.id || 'demo-user',
       name,
       deadline: deadline ? new Date(deadline) : null,
       decisionType: decisionType as College['decisionType'],
