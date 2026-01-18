@@ -1,109 +1,124 @@
-import { Router, Request, Response } from 'express';
-import { extractStoryThreads } from '../services/agents';
+import { Router, Request, Response } from "express";
+import { runAgent, extractStoryThreads } from "../services/agents";
 
 export const voiceRouter = Router();
 
-// In-memory storage for demo
-const interviews: any[] = [];
+type HistoryTurn = { role: "user" | "assistant"; text: string };
 
-// Start voice session (would integrate with Livekit in production)
-voiceRouter.post('/start-session', (req: Request, res: Response) => {
-  const { userId } = req.body;
+// Pull a usable text reply out of whatever runAgent returns
+function normalizeAgentReply(result: unknown): string {
+  if (!result) return "";
 
-  // In production, this would create a Livekit room
-  const session = {
-    id: `session-${Date.now()}`,
-    userId,
-    roomName: `council-${userId}-${Date.now()}`,
-    token: 'demo-token', // Would be a real Livekit token
-    createdAt: new Date().toISOString(),
-  };
+  // If runAgent returns a string, we’re done
+  if (typeof result === "string") return result.trim();
 
-  res.json(session);
-});
+  // If runAgent returns an object, try common fields
+  if (typeof result === "object") {
+    const r: any = result;
 
-// Upload recording
-voiceRouter.post('/upload', async (req: Request, res: Response) => {
-  const { userId, audioData, duration } = req.body;
+    // Most common candidates
+    const candidates = [
+      r.reply,
+      r.text,
+      r.feedback,
+      r.message,
+      r.output_text,
+      r.content,
+      r?.feedback?.text,
+    ];
 
-  // In production, this would upload to Supabase Storage
-  const interview = {
-    id: `interview-${Date.now()}`,
-    userId,
-    audioUrl: `https://storage.example.com/audio/${Date.now()}.webm`,
-    transcript: null,
-    durationSeconds: duration,
-    storyThreads: [],
-    createdAt: new Date().toISOString(),
-  };
+    for (const c of candidates) {
+      if (typeof c === "string" && c.trim()) return c.trim();
+    }
 
-  interviews.push(interview);
-  res.status(201).json(interview);
-});
-
-// Transcribe audio
-voiceRouter.post('/transcribe/:id', async (req: Request, res: Response) => {
-  const interview = interviews.find(i => i.id === req.params.id);
-
-  if (!interview) {
-    return res.status(404).json({ error: 'Interview not found' });
+    // If it has nested structures, try to find any string leaf that looks like an answer
+    // (keep this minimal so it doesn't get weird)
+    try {
+      const asString = JSON.stringify(r);
+      // If it looks like JSON but contains "feedback":"...", try to extract that quickly
+      const m = asString.match(/"feedback"\s*:\s*"([^"]+)"/);
+      if (m?.[1]) return m[1].replace(/\\n/g, "\n").trim();
+    } catch {
+      // ignore
+    }
   }
 
-  // In production, this would call Deepgram or Whisper API
-  // For demo, we'll use a simulated transcript
-  const simulatedTranscript = `
-So the question is about a challenge I faced. Let me think about this.
+  // Last resort
+  return String(result).trim();
+}
 
-I remember staying up really late, like 3am, working on our robotics project. Everyone else had given up for the night, but I couldn't stop. There was this bug in our autonomous navigation code that was causing the robot to drift.
-
-I remember thinking, if I just look at this one more time, maybe I'll see what I'm missing. And then it hit me - the sensor calibration was off by just 2 degrees. Such a tiny error, but it was causing cascading failures throughout the whole system.
-
-When it finally worked, I just stared at the screen for a full minute. I was so tired but so relieved. That moment taught me that sometimes the breakthrough comes when everyone else has stopped looking.
-
-Another experience that shaped me was tutoring this younger student named Maya. At first I thought I'd be teaching her, but she asked this question about why we do math this way, and I couldn't answer it. She asked me 'why' about something I'd never questioned before.
-
-That made me realize I was learning as much as I was teaching. It changed how I approach problems - now I always ask 'why' even about things I think I understand.
-  `.trim();
-
-  interview.transcript = simulatedTranscript;
-  res.json({ transcript: simulatedTranscript });
-});
-
-// Extract stories from transcript
-voiceRouter.post('/extract-stories/:id', async (req: Request, res: Response) => {
-  const interview = interviews.find(i => i.id === req.params.id);
-
-  if (!interview) {
-    return res.status(404).json({ error: 'Interview not found' });
-  }
-
-  if (!interview.transcript) {
-    return res.status(400).json({ error: 'Interview has not been transcribed yet' });
-  }
-
+/**
+ * POST /api/voice/interview
+ * body: { message: string, history?: { role, text }[] }
+ * returns: { reply: string }
+ */
+voiceRouter.post("/interview", async (req: Request, res: Response) => {
   try {
-    const stories = await extractStoryThreads(interview.transcript);
-    interview.storyThreads = stories.threads;
-    res.json(stories);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to extract stories' });
+    const { message, history } = req.body as {
+      message?: string;
+      history?: HistoryTurn[];
+    };
+
+    if (!message || typeof message !== "string") {
+      return res.status(400).json({ error: "message is required" });
+    }
+
+    const turns = Array.isArray(history) ? history.slice(-10) : [];
+    const formattedHistory = turns
+      .map((t) => `${t.role === "user" ? "Student" : "Advisor"}: ${t.text}`)
+      .join("\n");
+
+    const prompt = `
+You are an expert college admissions advisor doing a live interview.
+
+Rules:
+- Ask 1 strong follow-up question at a time.
+- Give short, practical feedback.
+- Collect details: grade, GPA (weighted/unweighted), courses (AP/IB/honors), SAT/ACT, activities, awards, leadership, volunteering, work, intended major, and story moments.
+- Be supportive and clear (no fluff).
+- Keep responses under ~120 words unless asked for more.
+- Respond with plain text only. Do NOT output JSON.
+
+Conversation so far:
+${formattedHistory || "(none)"}
+
+Student just said:
+${message}
+
+Now reply as the Advisor:
+`.trim();
+
+    const result = await runAgent("admissions", prompt);
+    const reply = normalizeAgentReply(result);
+
+    return res.json({ reply: reply || "Got it — can you tell me a bit more?" });
+  } catch (err: any) {
+    console.error("voice/interview error:", err);
+    return res.status(500).json({
+      error: err?.message ?? "Failed to generate advisor reply",
+    });
   }
 });
 
-// Get all interviews for user
-voiceRouter.get('/interviews', (req: Request, res: Response) => {
-  const { userId } = req.query;
-  const userInterviews = userId
-    ? interviews.filter(i => i.userId === userId)
-    : interviews;
-  res.json(userInterviews);
+/**
+ * OPTIONAL: story extraction
+ * POST /api/voice/extract-stories
+ * body: { transcript: string }
+ */
+voiceRouter.post("/extract-stories", async (req: Request, res: Response) => {
+  try {
+    const { transcript } = req.body as { transcript?: string };
+    if (!transcript) {
+      return res.status(400).json({ error: "transcript is required" });
+    }
+    const stories = await extractStoryThreads(transcript);
+    return res.json(stories);
+  } catch (err: any) {
+    console.error("voice/extract-stories error:", err);
+    return res.status(500).json({ error: err?.message ?? "Failed to extract stories" });
+  }
 });
 
-// Get single interview
-voiceRouter.get('/interviews/:id', (req: Request, res: Response) => {
-  const interview = interviews.find(i => i.id === req.params.id);
-  if (!interview) {
-    return res.status(404).json({ error: 'Interview not found' });
-  }
-  res.json(interview);
+voiceRouter.get("/health", (_req: Request, res: Response) => {
+  res.json({ ok: true });
 });
