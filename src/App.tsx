@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Layout } from './components/layout';
 import { Dashboard, Colleges, Essays, Markets, Voice, Activities } from './pages';
 import { useStore } from './store/useStore';
-import { supabase } from './lib/supabase';
+import { supabase, ensureUserRow } from './lib/supabase';
 import { fetchColleges, fetchEssays, fetchActivities, fetchHonors } from './lib/supabase';
 
 function App() {
@@ -14,7 +14,9 @@ function App() {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        setUser({ id: user.id, email: user.email || '', username: user.user_metadata?.name || '', credits: 1000, createdAt: new Date() });
+        const appUser = { id: user.id, email: user.email || '', username: user.user_metadata?.name || '' };
+        setUser({ ...appUser, credits: 1000, createdAt: new Date() });
+        await ensureUserRow(appUser);
         // Load user data
         const [colleges, essays, activities, honors] = await Promise.all([
           fetchColleges(user.id).catch(() => []),
@@ -35,7 +37,9 @@ function App() {
     const { data: subscription } = supabase.auth.onAuthStateChange(async (event, session) => {
       const user = session?.user;
       if (user) {
-        setUser({ id: user.id, email: user.email || '', username: user.user_metadata?.name || '', credits: 1000, createdAt: new Date() });
+        const appUser = { id: user.id, email: user.email || '', username: user.user_metadata?.name || '' };
+        setUser({ ...appUser, credits: 1000, createdAt: new Date() });
+        await ensureUserRow(appUser);
         const [colleges, essays, activities, honors] = await Promise.all([
           fetchColleges(user.id).catch(() => []),
           fetchEssays(user.id).catch(() => []),

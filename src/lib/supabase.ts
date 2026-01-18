@@ -1,10 +1,25 @@
 import { createClient } from '@supabase/supabase-js';
-import type { College, Essay, Activity, Honor } from '../types';
+import type { College, Essay, Activity, Honor, User } from '../types';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'http://localhost:54321';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Ensure a row exists in public.users for RLS checks
+export async function ensureUserRow(user: Pick<User, 'id' | 'email' | 'username'>) {
+  const { error } = await supabase
+    .from('users')
+    .upsert({
+      id: user.id,
+      email: user.email,
+      username: user.username || user.email,
+    }, { onConflict: 'id' });
+  if (error) {
+    console.error('ensureUserRow error', error.message);
+    throw error;
+  }
+}
 
 // Auth helpers
 export async function signInWithGoogle() {
