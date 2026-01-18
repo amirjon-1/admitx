@@ -27,6 +27,18 @@ function App() {
     // Initialize session and subscribe to auth changes
     const init = async () => {
       try {
+        // Handle OAuth callback - check for hash fragments first
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const hasOAuthToken = hashParams.has('access_token') || hashParams.has('error');
+        
+        if (hasOAuthToken) {
+          // OAuth callback - let Supabase process it
+          console.log('🔄 Processing OAuth callback...');
+          // Supabase will automatically handle the hash fragment
+          // Wait a bit for it to process
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
         // Use Promise.race to ensure we don't wait forever
         const sessionPromise = supabase.auth.getSession();
         const timeoutPromise = new Promise((resolve) => 
@@ -53,6 +65,11 @@ function App() {
             // Don't await these - let them run in background
             ensureUserRow(appUser).catch(console.error);
             loadUserData(session.user.id).catch(console.error);
+            
+            // Clean up OAuth hash from URL after processing
+            if (hasOAuthToken) {
+              window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            }
           } else {
             // No valid session - clear user to prevent stale redirects
             setUser(null);
