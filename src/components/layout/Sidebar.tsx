@@ -35,31 +35,73 @@ export function Sidebar() {
     try {
       console.log('Starting logout...');
       
-      // Clear state first
+      // Clear state immediately
       setUser(null);
       setColleges([]);
       setEssays([]);
       setActivities([]);
       setHonors([]);
       
-      // Sign out from Supabase
+      // Sign out from Supabase and WAIT for it to complete
       const { error } = await supabase.auth.signOut();
       
       if (error) {
         console.error('Sign out error:', error);
-        throw error;
+        // Continue anyway - we'll clear storage manually
       }
       
-      console.log('Sign out successful, navigating...');
+      // Clear all Supabase-related storage
+      try {
+        // Clear Supabase session storage
+        const supabaseKeys = Object.keys(localStorage).filter(key => 
+          key.startsWith('sb-') || key.includes('supabase')
+        );
+        supabaseKeys.forEach(key => localStorage.removeItem(key));
+        
+        // Also clear sessionStorage
+        const sessionKeys = Object.keys(sessionStorage).filter(key => 
+          key.startsWith('sb-') || key.includes('supabase')
+        );
+        sessionKeys.forEach(key => sessionStorage.removeItem(key));
+      } catch (storageError) {
+        console.error('Error clearing storage:', storageError);
+      }
       
-      // Force navigation using window.location to ensure it happens
+      console.log('Sign out successful, redirecting...');
+      
+      // Set a flag to prevent auto-login on next page load
+      sessionStorage.setItem('admitx_logging_out', 'true');
+      
+      // Add a small delay to ensure everything is cleared, then redirect
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Redirect to home page with full reload
       window.location.href = '/';
     } catch (error) {
       console.error('Logout error:', error);
-      // Even on error, try to navigate
+      // Clear state anyway
+      setUser(null);
+      setColleges([]);
+      setEssays([]);
+      setActivities([]);
+      setHonors([]);
+      
+      // Clear storage manually
+      try {
+        const supabaseKeys = Object.keys(localStorage).filter(key => 
+          key.startsWith('sb-') || key.includes('supabase')
+        );
+        supabaseKeys.forEach(key => localStorage.removeItem(key));
+        const sessionKeys = Object.keys(sessionStorage).filter(key => 
+          key.startsWith('sb-') || key.includes('supabase')
+        );
+        sessionKeys.forEach(key => sessionStorage.removeItem(key));
+      } catch (storageError) {
+        console.error('Error clearing storage:', storageError);
+      }
+      
+      // Force redirect
       window.location.href = '/';
-    } finally {
-      setIsLoggingOut(false);
     }
   };
 

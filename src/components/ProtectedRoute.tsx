@@ -31,14 +31,14 @@ export function ProtectedRoute() {
       }
 
       try {
-        // Check session with timeout
+        // Check session with timeout - give it more time
         const sessionPromise = supabase.auth.getSession();
         const timeoutPromise = new Promise((resolve) => 
-          setTimeout(() => resolve({ data: { session: null }, error: null }), 1000)
+          setTimeout(() => resolve({ data: { session: null }, error: null }), 2000)
         );
         
         const result = await Promise.race([sessionPromise, timeoutPromise]) as any;
-        const { data: { session } } = result || { data: { session: null }, error: null };
+        const { data: { session }, error } = result || { data: { session: null }, error: null };
         
         if (isMounted) {
           clearTimeout(timeoutId);
@@ -47,7 +47,23 @@ export function ProtectedRoute() {
             setHasSession(true);
             setIsChecking(false);
           } else {
-            // No session
+            // Check if it was a timeout or actual no session
+            const isTimeout = !session && !error;
+            if (isTimeout) {
+              // Timeout - might be slow network, check one more time
+              console.log('Session check timed out, retrying...');
+              try {
+                const retryResult = await supabase.auth.getSession();
+                if (retryResult.data?.session?.user) {
+                  setHasSession(true);
+                  setIsChecking(false);
+                  return;
+                }
+              } catch (retryError) {
+                console.error('Retry session check failed:', retryError);
+              }
+            }
+            // No session found
             setHasSession(false);
             setIsChecking(false);
           }
@@ -56,7 +72,18 @@ export function ProtectedRoute() {
         console.error('Auth check error:', error);
         if (isMounted) {
           clearTimeout(timeoutId);
-          setHasSession(false);
+          // On error, don't immediately deny - might be network issue
+          // Check one more time
+          try {
+            const retryResult = await supabase.auth.getSession();
+            if (retryResult.data?.session?.user) {
+              setHasSession(true);
+            } else {
+              setHasSession(false);
+            }
+          } catch {
+            setHasSession(false);
+          }
           setIsChecking(false);
         }
       }

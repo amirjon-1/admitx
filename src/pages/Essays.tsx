@@ -194,34 +194,61 @@ export function Essays() {
       setCurrentAgentIndex(i);
       const agent = AGENTS[i];
 
+      // Initialize feedback for this agent immediately
+      setFeedback((prev) => {
+        // Check if this agent already has feedback
+        const existing = prev.find((f) => f.type === agent.type);
+        if (existing) return prev;
+        
+        // Add placeholder
+        return [
+          ...prev,
+          {
+            ...agent,
+            feedback: null,
+            score: undefined,
+          },
+        ];
+      });
+
       try {
         const response = await analyzeWithSingleAgent(
           agent.type as 'story' | 'admissions' | 'technical' | 'authenticity',
           essay + promptContext
         );
 
-        setFeedback((prev) => [
-          ...prev,
-          {
-            ...agent,
-            feedback: response.feedback,
-            score: response.score,
-          },
-        ]);
+        // Update feedback with response
+        setFeedback((prev) => {
+          const updated = prev.map((f) =>
+            f.type === agent.type
+              ? {
+                  ...f,
+                  feedback: response.feedback || 'No feedback received.',
+                  score: response.score,
+                }
+              : f
+          );
+          return updated;
+        });
 
         if (agent.type === 'authenticity' && response.score) {
           setAuthenticityScore(response.score);
         }
       } catch (error) {
         console.error(`Error with ${agent.type} agent:`, error);
-        setFeedback((prev) => [
-          ...prev,
-          {
-            ...agent,
-            feedback: `**Error**: Failed to get AI analysis. Please check that the server is running and try again.\n\nError details: ${error instanceof Error ? error.message : 'Unknown error'}`,
-            score: undefined,
-          },
-        ]);
+        // Update feedback with error message
+        setFeedback((prev) => {
+          const updated = prev.map((f) =>
+            f.type === agent.type
+              ? {
+                  ...f,
+                  feedback: `**Error**: Failed to get AI analysis. Please check that the server is running and try again.\n\nError details: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                  score: undefined,
+                }
+              : f
+          );
+          return updated;
+        });
       }
     }
 
@@ -449,30 +476,23 @@ export function Essays() {
               {/* Agent Feedback */}
               <div className="space-y-4">
                 <AnimatePresence mode="popLayout">
-                  {feedback.map((agent, index) => (
-                    <AgentCard
-                      key={agent.type}
-                      name={agent.name}
-                      type={agent.type}
-                      icon={agent.icon}
-                      feedback={agent.feedback}
-                      score={agent.score}
-                      isLoading={false}
-                      delay={index * 0.1}
-                    />
-                  ))}
-
-                  {isAnalyzing &&
-                    AGENTS.slice(feedback.length).map((agent, index) => (
+                  {/* Show all agents - either from feedback or from AGENTS array */}
+                  {AGENTS.map((agent, index) => {
+                    const agentFeedback = feedback.find((f) => f.type === agent.type);
+                    const isCurrentlyAnalyzing = isAnalyzing && currentAgentIndex === index;
+                    return (
                       <AgentCard
                         key={agent.type}
                         name={agent.name}
                         type={agent.type}
                         icon={agent.icon}
-                        feedback={null}
-                        isLoading={currentAgentIndex === feedback.length + index}
+                        feedback={agentFeedback?.feedback || null}
+                        score={agentFeedback?.score}
+                        isLoading={isCurrentlyAnalyzing}
+                        delay={index * 0.1}
                       />
-                    ))}
+                    );
+                  })}
 
                   {synthesisText && (
                     <motion.div

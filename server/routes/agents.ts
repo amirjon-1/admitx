@@ -32,8 +32,21 @@ async function handleAgent(
     console.log(`🤖 Agent "${agentName}" running. Length:`, input.length);
     const output = await runAgent(agentName as any, input);
 
-    // Always respond as JSON
-    return res.json(output);
+    // Wrap the string response in an object with feedback property
+    // Extract score for authenticity agent
+    let score: number | undefined = undefined;
+    if (agentName === "authenticity") {
+      const m = output.match(/(?:Authenticity\s*Score|Score)[:\s]*(\d{1,3})(?:\/100)?/i);
+      if (m) {
+        score = Math.min(100, Math.max(1, parseInt(m[1], 10)));
+      }
+    }
+
+    // Always respond as JSON with the expected structure
+    return res.json({
+      feedback: output,
+      score: score,
+    });
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     console.error(`❌ Agent "${agentName}" error:`, msg, error);

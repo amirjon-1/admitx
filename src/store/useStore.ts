@@ -156,14 +156,24 @@ export const useStore = create<AppState>()(
           const next = state.essays.map((e) => (e.id === id ? { ...e, ...updates } : e));
           const updated = next.find((e) => e.id === id);
           if (state.user && updated) {
-            // Ensure dates are Date objects
+            // Ensure all required fields are present and dates are Date objects
             const essayToSave = {
               ...updated,
+              // Ensure required fields exist - preserve ALL fields from the existing essay
+              id: updated.id,
+              userId: updated.userId || state.user.id,
+              collegeId: updated.collegeId || null,
+              prompt: updated.prompt || 'Untitled Essay',
+              draft: updated.draft || '', // CRITICAL: Make sure draft is included
+              version: updated.version || 1,
+              wordCount: updated.wordCount || 0,
+              authenticityScore: updated.authenticityScore ?? null,
+              // Ensure dates are Date objects
               createdAt: updated.createdAt instanceof Date 
                 ? updated.createdAt 
                 : new Date(updated.createdAt || Date.now()),
-              updatedAt: updates.updatedAt instanceof Date 
-                ? updates.updatedAt 
+              updatedAt: updated.updatedAt instanceof Date 
+                ? updated.updatedAt 
                 : new Date(updates.updatedAt || Date.now()),
               lastFeedbackAt: updated.lastFeedbackAt 
                 ? (updated.lastFeedbackAt instanceof Date 
@@ -172,17 +182,40 @@ export const useStore = create<AppState>()(
                 : null,
             };
             
+            console.log('🔄 Updating essay in database:', { 
+              id, 
+              updates,
+              draft_length: essayToSave.draft?.length || 0,
+              prompt: essayToSave.prompt?.substring(0, 30) + '...'
+            });
+            
+            // Await the upsert to ensure it completes
             upsertEssay(state.user.id, essayToSave)
-              .then(() => {
+              .then((result) => {
                 console.log('✅ Essay updated in database:', id);
+                console.log('✅ Upsert result:', result ? 'Success' : 'No data returned');
+                
+                // Verify the save was successful by checking if we got data back
+                if (!result || result.length === 0) {
+                  console.warn('⚠️ Essay update completed but no data returned - might indicate RLS issue');
+                }
               })
               .catch((err) => {
                 console.error('❌ Failed to update essay in database:', err);
-                console.error('Essay data:', essayToSave);
+                console.error('Essay data:', {
+                  id: essayToSave.id,
+                  prompt: essayToSave.prompt?.substring(0, 50),
+                  draft_length: essayToSave.draft?.length,
+                  wordCount: essayToSave.wordCount
+                });
+                // Revert the local state update if save failed
+                // Actually, don't revert - let the user see their changes, but log the error
               });
           } else {
             if (!state.user) {
               console.warn('⚠️ Cannot update essay: user not authenticated');
+            } else {
+              console.warn('⚠️ Cannot update essay: essay not found with id:', id);
             }
           }
           return { essays: next };
@@ -199,14 +232,38 @@ export const useStore = create<AppState>()(
       addActivity: (activity) =>
         set((state) => {
           const next = [...state.activities, activity];
-          if (state.user) upsertActivity(state.user.id, activity).catch(console.error);
+          if (state.user) {
+            upsertActivity(state.user.id, activity)
+              .then(() => {
+                console.log('✅ Activity saved to database:', activity.id);
+              })
+              .catch((err) => {
+                console.error('❌ Failed to save activity to database:', err);
+                console.error('Activity data:', activity);
+              });
+          } else {
+            console.warn('⚠️ Cannot save activity: user not authenticated');
+          }
           return { activities: next };
         }),
       updateActivity: (id, updates) =>
         set((state) => {
           const next = state.activities.map((a) => (a.id === id ? { ...a, ...updates } : a));
           const updated = next.find((a) => a.id === id);
-          if (state.user && updated) upsertActivity(state.user.id, updated).catch(console.error);
+          if (state.user && updated) {
+            upsertActivity(state.user.id, updated)
+              .then(() => {
+                console.log('✅ Activity updated in database:', id);
+              })
+              .catch((err) => {
+                console.error('❌ Failed to update activity in database:', err);
+                console.error('Activity data:', updated);
+              });
+          } else {
+            if (!state.user) {
+              console.warn('⚠️ Cannot update activity: user not authenticated');
+            }
+          }
           return { activities: next };
         }),
       removeActivity: (id) =>

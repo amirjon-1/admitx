@@ -249,6 +249,36 @@ export function Markets() {
       />
 
       <div className="p-8">
+        {/* Under Construction Banner */}
+        <Card className="mb-8 border-2 border-primary-200 bg-gradient-to-r from-primary-50 to-primary-100">
+          <CardContent className="p-6">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 p-3 rounded-lg bg-primary-500 text-white">
+                <Sparkles className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  🚧 Under Construction
+                </h3>
+                <p className="text-gray-700 mb-3">
+                  We're building the newest way to bet on each other's potential future colleges. 
+                  Prediction markets are coming soon!
+                </p>
+                <div className="space-y-2 text-sm text-gray-600">
+                  <p className="font-semibold">What to expect:</p>
+                  <ul className="list-disc list-inside space-y-1 ml-2">
+                    <li>Bet on admission outcomes using Council Credits</li>
+                    <li>Real-time odds based on community predictions</li>
+                    <li>Win credits when your predictions are correct</li>
+                    <li>Anonymous profiles to protect privacy</li>
+                    <li>Leaderboards to track the best predictors</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Stats Bar */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <Card className="p-4">

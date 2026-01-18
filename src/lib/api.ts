@@ -6,11 +6,13 @@ const getApiBase = () => {
     return '/api';
   }
   if (apiUrl.startsWith('http')) {
-    // Full URL - ensure it ends with /api
-    return apiUrl.endsWith('/api') ? apiUrl : `${apiUrl}/api`;
+    // Full URL - remove trailing slash, then add /api
+    const cleanUrl = apiUrl.replace(/\/+$/, ''); // Remove trailing slashes
+    return cleanUrl.endsWith('/api') ? cleanUrl : `${cleanUrl}/api`;
   }
-  // Relative path - ensure it starts with /
-  return apiUrl.startsWith('/') ? apiUrl : `/${apiUrl}`;
+  // Relative path - ensure it starts with / and doesn't have double slashes
+  const cleanPath = apiUrl.replace(/^\/+/, ''); // Remove leading slashes
+  return `/${cleanPath}`;
 };
 
 const API_BASE = getApiBase();

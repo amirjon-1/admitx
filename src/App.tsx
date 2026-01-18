@@ -31,6 +31,22 @@ function App() {
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const hasOAuthToken = hashParams.has('access_token') || hashParams.has('error');
         
+        // Check if we're coming from a logout (check for a flag in sessionStorage)
+        const isLoggingOut = sessionStorage.getItem('admitx_logging_out') === 'true';
+        if (isLoggingOut) {
+          // Clear the flag
+          sessionStorage.removeItem('admitx_logging_out');
+          // Don't restore session - user just logged out
+          if (isMounted) {
+            setUser(null);
+            setColleges([]);
+            setEssays([]);
+            setActivities([]);
+            setHonors([]);
+          }
+          return;
+        }
+        
         if (hasOAuthToken) {
           // OAuth callback - let Supabase process it
           console.log('🔄 Processing OAuth callback...');
@@ -71,12 +87,21 @@ function App() {
               window.history.replaceState(null, '', window.location.pathname + window.location.search);
             }
           } else {
-            // No valid session - clear user to prevent stale redirects
-            setUser(null);
-            setColleges([]);
-            setEssays([]);
-            setActivities([]);
-            setHonors([]);
+            // No valid session - only clear if we're sure there's no session
+            // Don't clear if we timed out (might be slow network)
+            const isTimeout = !session && !error;
+            if (!isTimeout) {
+              // Only clear if we got a definitive "no session" response
+              console.log('No session found - clearing user state');
+              setUser(null);
+              setColleges([]);
+              setEssays([]);
+              setActivities([]);
+              setHonors([]);
+            } else {
+              // Timeout - keep existing state, let ProtectedRoute handle it
+              console.log('Session check timed out - keeping existing state');
+            }
           }
         }
       } catch (error) {

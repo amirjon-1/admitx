@@ -222,13 +222,23 @@ export function Activities() {
       console.log("4. Sending to backend...");
 
       // Send transcript to backend for activity and honors generation
-      const API_BASE = import.meta.env.VITE_API_URL 
-        ? (import.meta.env.VITE_API_URL.endsWith('/api') 
-            ? import.meta.env.VITE_API_URL 
-            : `${import.meta.env.VITE_API_URL}/api`)
-        : '/api';
+      // Use the same API_BASE logic as api.ts
+      const getApiBase = () => {
+        const apiUrl = import.meta.env.VITE_API_URL;
+        if (!apiUrl) {
+          return '/api';
+        }
+        if (apiUrl.startsWith('http')) {
+          // Full URL - remove trailing slash, then add /api
+          const cleanUrl = apiUrl.replace(/\/+$/, ''); // Remove trailing slashes
+          return cleanUrl.endsWith('/api') ? cleanUrl : `${cleanUrl}/api`;
+        }
+        // Relative path - ensure it starts with / and doesn't have double slashes
+        const cleanPath = apiUrl.replace(/^\/+/, ''); // Remove leading slashes
+        return `/${cleanPath}`;
+      };
       
-      const res = await fetch(`${API_BASE}/activities/generate`, {
+      const res = await fetch(`${getApiBase()}/activities/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ transcript: interview.transcript }),
@@ -259,9 +269,11 @@ export function Activities() {
     }
   };
 
-  const importGeneratedActivities = () => {
+  const importGeneratedActivities = async () => {
     if (!user || !generatedActivities?.length) return;
 
+    console.log('📥 Importing', generatedActivities.length, 'activities from voice interview...');
+    
     for (const g of generatedActivities) {
       const a: Activity = {
         id: crypto.randomUUID(),
@@ -281,14 +293,19 @@ export function Activities() {
       };
 
       addActivity(a);
+      // Add a small delay to prevent overwhelming the database
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
 
+    console.log('✅ Finished importing activities');
     setGenOpen(false);
   };
 
-  const importGeneratedHonors = () => {
+  const importGeneratedHonors = async () => {
     if (!user || !generatedHonors?.length) return;
 
+    console.log('📥 Importing', generatedHonors.length, 'honors from voice interview...');
+    
     for (const h of generatedHonors) {
       const honor: Honor = {
         id: crypto.randomUUID(),
@@ -301,14 +318,19 @@ export function Activities() {
       };
 
       addHonor(honor);
+      // Add a small delay to prevent overwhelming the database
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
 
+    console.log('✅ Finished importing honors');
     setGenOpen(false);
   };
 
-  const importAll = () => {
+  const importAll = async () => {
     if (!user) return;
 
+    console.log('📥 Importing all activities and honors from voice interview...');
+    
     if (generatedActivities?.length) {
       for (const g of generatedActivities) {
         const a: Activity = {
@@ -328,6 +350,8 @@ export function Activities() {
           createdAt: new Date(),
         };
         addActivity(a);
+        // Add a small delay to prevent overwhelming the database
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
     }
 
@@ -343,9 +367,12 @@ export function Activities() {
           createdAt: new Date(),
         };
         addHonor(honor);
+        // Add a small delay to prevent overwhelming the database
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
     }
 
+    console.log('✅ Finished importing all items');
     setGenOpen(false);
   };
 
