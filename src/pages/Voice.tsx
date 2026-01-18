@@ -9,7 +9,7 @@ export function Voice() {
     if (user?.id) {
       url.searchParams.set("user_id", user.id);
     }
-    window.location.href = url.toString();
+    window.open(url.toString(), "_blank", "noopener,noreferrer");
   };
 
   return (

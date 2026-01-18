@@ -23,10 +23,11 @@ export async function ensureUserRow(user: Pick<User, 'id' | 'email' | 'username'
 
 // Auth helpers
 export async function signInWithGoogle() {
+  const redirectTo = `${window.location.origin}/dashboard`;
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: window.location.origin,
+      redirectTo,
     },
   });
   if (error) throw error;

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { GraduationCap, Sparkles, BookOpen, TrendingUp, Zap, Shield } from 'lucide-react';
 import { Button } from '../components/ui';
@@ -9,10 +9,25 @@ import { useStore } from '../store/useStore';
 export function Home() {
   const { user } = useStore();
   const [isLoading, setIsLoading] = useState(false);
+  const location = useLocation();
+
+  // Clean up OAuth hash fragments from URL
+  useEffect(() => {
+    if (window.location.hash) {
+      // Remove hash from URL after OAuth callback
+      const hash = window.location.hash;
+      if (hash.includes('access_token') || hash.includes('error')) {
+        // Clean up the URL
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+    }
+  }, []);
 
   // If user is already logged in, redirect to dashboard
+  // Check if there's a redirect location from ProtectedRoute
   if (user) {
-    return <Navigate to="/dashboard" replace />;
+    const from = (location.state as any)?.from?.pathname;
+    return <Navigate to={from || "/dashboard"} replace />;
   }
 
   const handleSignIn = async () => {
