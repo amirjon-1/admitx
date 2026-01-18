@@ -1,3 +1,4 @@
+export { Home } from './Home';
 export { Dashboard } from './Dashboard';
 export { Colleges } from './Colleges';
 export { Essays } from './Essays';

@@ -4,7 +4,6 @@ import {
   FileText,
   CheckCircle2,
   Clock,
-  TrendingUp,
   AlertTriangle,
 } from 'lucide-react';
 import { Card } from '../ui';
@@ -30,14 +29,6 @@ export function StatsOverview({ colleges, essays }: StatsOverviewProps) {
   }).length;
 
   const totalEssays = essays.length;
-  const averageAuthenticity = essays.length
-    ? Math.round(
-        essays
-          .filter((e) => e.authenticityScore !== null)
-          .reduce((acc, e) => acc + (e.authenticityScore || 0), 0) /
-          essays.filter((e) => e.authenticityScore !== null).length
-      )
-    : 0;
 
   const stats = [
     {
@@ -70,16 +61,10 @@ export function StatsOverview({ colleges, essays }: StatsOverviewProps) {
       icon: FileText,
       color: 'bg-purple-100 text-purple-600',
     },
-    {
-      label: 'Avg. Authenticity',
-      value: `${averageAuthenticity}%`,
-      icon: TrendingUp,
-      color: 'bg-blue-100 text-blue-600',
-    },
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
       {stats.map((stat, index) => (
         <motion.div
           key={stat.label}

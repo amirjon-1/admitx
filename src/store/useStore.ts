@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { upsertCollege, deleteCollege, upsertEssay, deleteEssay, upsertActivity, deleteActivity, upsertHonor, deleteHonor } from '../lib/supabase';
+import { upsertCollege, deleteCollege, upsertEssay, deleteEssay, upsertActivity, deleteActivity, upsertHonor, deleteHonor, signOut } from '../lib/supabase';
 import type {
   User,
   StudentProfile,
@@ -82,18 +82,20 @@ export const useStore = create<AppState>()(
       isAuthenticated: false,
       setUser: (user) =>
         set({ user, isAuthenticated: !!user }),
-      logout: () =>
-        set({
-          user: null,
-          isAuthenticated: false,
-          profile: null,
-          colleges: [],
-          essays: [],
-          activities: [],
-          honors: [],
-          interviews: [],
-          myBets: [],
-        }),
+      logout: async () => {
+        await signOut().catch(console.error);
+        // set({
+        //   user: null,
+        //   isAuthenticated: false,
+        //   profile: null,
+        //   colleges: [],
+        //   essays: [],
+        //   activities: [],
+        //   honors: [],
+        //   interviews: [],
+        //   myBets: [],
+        // });
+      },
 
       // Profile
       profile: null,
@@ -135,7 +137,18 @@ export const useStore = create<AppState>()(
       addEssay: (essay) =>
         set((state) => {
           const next = [...state.essays, essay];
-          if (state.user) upsertEssay(state.user.id, essay).catch(console.error);
+          if (state.user) {
+            upsertEssay(state.user.id, essay)
+              .then(() => {
+                console.log('✅ Essay saved to database:', essay.id);
+              })
+              .catch((err) => {
+                console.error('❌ Failed to save essay to database:', err);
+                console.error('Essay data:', essay);
+              });
+          } else {
+            console.warn('⚠️ Cannot save essay: user not authenticated');
+          }
           return { essays: next };
         }),
       updateEssay: (id, updates) =>
@@ -143,10 +156,34 @@ export const useStore = create<AppState>()(
           const next = state.essays.map((e) => (e.id === id ? { ...e, ...updates } : e));
           const updated = next.find((e) => e.id === id);
           if (state.user && updated) {
-            upsertEssay(state.user.id, {
+            // Ensure dates are Date objects
+            const essayToSave = {
               ...updated,
-              updatedAt: new Date(),
-            }).catch(console.error);
+              createdAt: updated.createdAt instanceof Date 
+                ? updated.createdAt 
+                : new Date(updated.createdAt || Date.now()),
+              updatedAt: updates.updatedAt instanceof Date 
+                ? updates.updatedAt 
+                : new Date(updates.updatedAt || Date.now()),
+              lastFeedbackAt: updated.lastFeedbackAt 
+                ? (updated.lastFeedbackAt instanceof Date 
+                    ? updated.lastFeedbackAt 
+                    : new Date(updated.lastFeedbackAt))
+                : null,
+            };
+            
+            upsertEssay(state.user.id, essayToSave)
+              .then(() => {
+                console.log('✅ Essay updated in database:', id);
+              })
+              .catch((err) => {
+                console.error('❌ Failed to update essay in database:', err);
+                console.error('Essay data:', essayToSave);
+              });
+          } else {
+            if (!state.user) {
+              console.warn('⚠️ Cannot update essay: user not authenticated');
+            }
           }
           return { essays: next };
         }),

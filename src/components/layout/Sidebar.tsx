@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -7,15 +8,15 @@ import {
   Mic,
   Trophy,
   TrendingUp,
-  Settings,
   LogOut,
-  Sparkles,
 } from 'lucide-react';
+import logoImage from '../../assets/image.png';
 import { cn } from '../../lib/utils';
 import { useStore } from '../../store/useStore';
+import { supabase } from '../../lib/supabase';
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Colleges', href: '/colleges', icon: GraduationCap },
   { name: 'Essays', href: '/essays', icon: FileText },
   { name: 'Voice Interview', href: '/voice', icon: Mic },
@@ -24,15 +25,53 @@ const navigation = [
 ];
 
 export function Sidebar() {
-  const { user, logout } = useStore();
+  const { user, setUser, setColleges, setEssays, setActivities, setHonors } = useStore();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return; // Prevent multiple clicks
+    
+    setIsLoggingOut(true);
+    try {
+      console.log('Starting logout...');
+      
+      // Clear state first
+      setUser(null);
+      setColleges([]);
+      setEssays([]);
+      setActivities([]);
+      setHonors([]);
+      
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Sign out error:', error);
+        throw error;
+      }
+      
+      console.log('Sign out successful, navigating...');
+      
+      // Force navigation using window.location to ensure it happens
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Even on error, try to navigate
+      window.location.href = '/';
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <div className="flex flex-col h-full w-64 bg-gray-900 text-white">
       {/* Logo */}
       <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-800">
-        <div className="p-2 bg-gradient-to-br from-primary-500 to-accent-500 rounded-xl">
-          <Sparkles className="w-6 h-6 text-white" />
-        </div>
+        <img 
+          src={logoImage} 
+          alt="AdmitX Logo" 
+          className="w-10 h-10 rounded-xl"
+        />
         <div>
           <h1 className="text-xl font-bold">AdmitX</h1>
           <p className="text-xs text-gray-400">AI College Counseling</p>
@@ -91,19 +130,13 @@ export function Sidebar() {
         </div>
 
         <div className="space-y-1">
-          <NavLink
-            to="/settings"
-            className="flex items-center gap-3 px-3 py-2 text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors"
-          >
-            <Settings className="w-4 h-4" />
-            <span className="text-sm">Settings</span>
-          </NavLink>
           <button
-            onClick={logout}
-            className="flex items-center gap-3 px-3 py-2 text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors w-full"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="flex items-center gap-3 px-3 py-2 text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors w-full disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <LogOut className="w-4 h-4" />
-            <span className="text-sm">Sign Out</span>
+            <span className="text-sm">{isLoggingOut ? 'Signing out...' : 'Sign Out'}</span>
           </button>
         </div>
       </div>

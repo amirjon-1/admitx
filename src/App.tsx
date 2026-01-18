@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Layout } from './components/layout';
-import { Dashboard, Colleges, Essays, Markets, Voice, Activities } from './pages';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { Home, Dashboard, Colleges, Essays, Markets, Voice, Activities } from './pages';
 import { useStore } from './store/useStore';
 import { supabase, ensureUserRow } from './lib/supabase';
 import { fetchColleges, fetchEssays, fetchActivities, fetchHonors } from './lib/supabase';
@@ -18,17 +19,31 @@ function App() {
         setUser({ ...appUser, credits: 1000, createdAt: new Date() });
         await ensureUserRow(appUser);
         // Load user data
+        console.log('🔄 Loading user data from database...');
         const [colleges, essays, activities, honors] = await Promise.all([
-          fetchColleges(user.id).catch(() => []),
-          fetchEssays(user.id).catch(() => []),
-          fetchActivities(user.id).catch(() => []),
-          fetchHonors(user.id).catch(() => []),
+          fetchColleges(user.id).catch((err) => {
+            console.error('Failed to fetch colleges:', err);
+            return [];
+          }),
+          fetchEssays(user.id).catch((err) => {
+            console.error('Failed to fetch essays:', err);
+            return [];
+          }),
+          fetchActivities(user.id).catch((err) => {
+            console.error('Failed to fetch activities:', err);
+            return [];
+          }),
+          fetchHonors(user.id).catch((err) => {
+            console.error('Failed to fetch honors:', err);
+            return [];
+          }),
         ]);
-        const current = useStore.getState();
-        setColleges(colleges.length ? colleges : current.colleges);
-        setEssays(essays.length ? essays : current.essays);
-        setActivities(activities.length ? activities : current.activities);
-        setHonors(honors.length ? honors : current.honors);
+        // Always use database data, don't fallback to cache
+        console.log(`📊 Loaded: ${colleges.length} colleges, ${essays.length} essays, ${activities.length} activities, ${honors.length} honors`);
+        setColleges(colleges);
+        setEssays(essays);
+        setActivities(activities);
+        setHonors(honors);
       }
     };
 
@@ -40,17 +55,31 @@ function App() {
         const appUser = { id: user.id, email: user.email || '', username: user.user_metadata?.name || '' };
         setUser({ ...appUser, credits: 1000, createdAt: new Date() });
         await ensureUserRow(appUser);
+        console.log('🔄 Loading user data from database (auth state change)...');
         const [colleges, essays, activities, honors] = await Promise.all([
-          fetchColleges(user.id).catch(() => []),
-          fetchEssays(user.id).catch(() => []),
-          fetchActivities(user.id).catch(() => []),
-          fetchHonors(user.id).catch(() => []),
+          fetchColleges(user.id).catch((err) => {
+            console.error('Failed to fetch colleges:', err);
+            return [];
+          }),
+          fetchEssays(user.id).catch((err) => {
+            console.error('Failed to fetch essays:', err);
+            return [];
+          }),
+          fetchActivities(user.id).catch((err) => {
+            console.error('Failed to fetch activities:', err);
+            return [];
+          }),
+          fetchHonors(user.id).catch((err) => {
+            console.error('Failed to fetch honors:', err);
+            return [];
+          }),
         ]);
-        const current = useStore.getState();
-        setColleges(colleges.length ? colleges : current.colleges);
-        setEssays(essays.length ? essays : current.essays);
-        setActivities(activities.length ? activities : current.activities);
-        setHonors(honors.length ? honors : current.honors);
+        // Always use database data, don't fallback to cache
+        console.log(`📊 Loaded: ${colleges.length} colleges, ${essays.length} essays, ${activities.length} activities, ${honors.length} honors`);
+        setColleges(colleges);
+        setEssays(essays);
+        setActivities(activities);
+        setHonors(honors);
       } else if (event === 'SIGNED_OUT') {
         // Only clear on explicit sign-out; preserve cache on initial null session
         setUser(null);
@@ -69,14 +98,21 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route element={<Layout />}>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/colleges" element={<Colleges />} />
-          <Route path="/essays" element={<Essays />} />
-          <Route path="/voice" element={<Voice />} />
-          <Route path="/activities" element={<Activities />} />
-          <Route path="/markets" element={<Markets />} />
+        {/* Public route - Home page */}
+        <Route path="/" element={<Home />} />
+        
+        {/* Protected routes - require authentication */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<Layout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/colleges" element={<Colleges />} />
+            <Route path="/essays" element={<Essays />} />
+            <Route path="/voice" element={<Voice />} />
+            <Route path="/activities" element={<Activities />} />
+            <Route path="/markets" element={<Markets />} />
+          </Route>
         </Route>
+        
       </Routes>
     </BrowserRouter>
   );

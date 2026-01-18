@@ -24,7 +24,6 @@ import {
   TextArea,
 } from '../components/ui';
 import { useStore } from '../store/useStore';
-import { generateId } from '../lib/utils';
 import type { Activity, Honor, ActivityCategory } from '../types';
 
 const CATEGORY_OPTIONS = [
@@ -45,92 +44,12 @@ const TIER_OPTIONS = [
   { value: 'School', label: 'School' },
 ];
 
-const DEMO_ACTIVITIES: Activity[] = [
-  {
-    id: '1',
-    userId: 'demo',
-    category: 'STEM',
-    name: 'Robotics Club',
-    role: 'Team Captain',
-    description: 'Led team to 3rd place at state competition; developed autonomous navigation system',
-    hoursPerWeek: 10,
-    weeksPerYear: 40,
-    yearsParticipated: 3,
-    leadershipPosition: true,
-    tier: 'State',
-    photoUrl: null,
-    photoAnalysis: null,
-    createdAt: new Date(),
-  },
-  {
-    id: '2',
-    userId: 'demo',
-    category: 'Service',
-    name: 'Local Food Bank',
-    role: 'Volunteer Coordinator',
-    description: 'Organized weekly food distributions serving 200+ families; recruited 50 new volunteers',
-    hoursPerWeek: 5,
-    weeksPerYear: 48,
-    yearsParticipated: 2,
-    leadershipPosition: true,
-    tier: 'Regional',
-    photoUrl: null,
-    photoAnalysis: null,
-    createdAt: new Date(),
-  },
-  {
-    id: '3',
-    userId: 'demo',
-    category: 'Arts',
-    name: 'Jazz Band',
-    role: 'First Chair Trumpet',
-    description: 'Performed at regional competitions; composed original arrangement performed at state festival',
-    hoursPerWeek: 8,
-    weeksPerYear: 36,
-    yearsParticipated: 4,
-    leadershipPosition: false,
-    tier: 'Regional',
-    photoUrl: null,
-    photoAnalysis: null,
-    createdAt: new Date(),
-  },
-];
-
-const DEMO_HONORS: Honor[] = [
-  {
-    id: '1',
-    userId: 'demo',
-    name: 'National Merit Semifinalist',
-    level: 'National',
-    description: 'Top 1% of PSAT test takers nationally',
-    gradeReceived: '11',
-    createdAt: new Date(),
-  },
-  {
-    id: '2',
-    userId: 'demo',
-    name: 'USACO Silver Division',
-    level: 'National',
-    description: 'USA Computing Olympiad Silver Division qualifier',
-    gradeReceived: '10',
-    createdAt: new Date(),
-  },
-];
-
 export function Activities() {
-  const { activities, honors, addActivity, removeActivity, addHonor, removeHonor, setActivities, setHonors } = useStore();
+  const { user, activities, honors, addActivity, removeActivity, addHonor, removeHonor } = useStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
   const [isAddHonorOpen, setIsAddHonorOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'activities' | 'honors'>('activities');
-
-  // Initialize demo data
-  if (activities.length === 0) {
-    setActivities(DEMO_ACTIVITIES);
-  }
-  if (honors.length === 0) {
-    setHonors(DEMO_HONORS);
-  }
 
   // Activity Form State
   const [activityForm, setActivityForm] = useState({
@@ -154,9 +73,14 @@ export function Activities() {
   });
 
   const handleAddActivity = () => {
+    if (!user) {
+      console.error('Cannot add activity: user not logged in');
+      return;
+    }
+    
     const activity: Activity = {
-      id: generateId(),
-      userId: 'demo',
+      id: crypto.randomUUID(),
+      userId: user.id,
       category: activityForm.category,
       name: activityForm.name,
       role: activityForm.role,
@@ -186,9 +110,14 @@ export function Activities() {
   };
 
   const handleAddHonor = () => {
+    if (!user) {
+      console.error('Cannot add honor: user not logged in');
+      return;
+    }
+    
     const honor: Honor = {
-      id: generateId(),
-      userId: 'demo',
+      id: crypto.randomUUID(),
+      userId: user.id,
       name: honorForm.name,
       level: honorForm.level,
       description: honorForm.description,
