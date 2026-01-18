@@ -248,7 +248,7 @@ export function Markets() {
         subtitle="Bet on admission outcomes with Council Credits"
       />
 
-      <div className="p-8">
+      <div className="p-4 md:p-8">
         {/* Under Construction Banner */}
         <Card className="mb-8 border-2 border-primary-200 bg-gradient-to-r from-primary-50 to-primary-100">
           <CardContent className="p-6">
@@ -280,7 +280,7 @@ export function Markets() {
         </Card>
 
         {/* Stats Bar */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-4 md:mb-8">
           <Card className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-green-100 text-green-600">
@@ -337,7 +337,7 @@ export function Markets() {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
           {/* Markets List */}
           <div className="lg:col-span-2 space-y-6">
             {/* Search */}

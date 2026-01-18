@@ -85,7 +85,7 @@ export function Colleges() {
         }}
       />
 
-      <div className="p-8">
+      <div className="p-4 md:p-8">
         {/* Filters */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="relative flex-1 max-w-md">

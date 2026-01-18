@@ -71,14 +71,14 @@ export function StatsOverview({ colleges, essays }: StatsOverviewProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.05 }}
         >
-          <Card className="p-4">
+          <Card className="p-3 md:p-4">
             <div className="flex items-center gap-3">
               <div className={`p-2 rounded-lg ${stat.color}`}>
                 <stat.icon className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                <p className="text-xs text-gray-500">{stat.label}</p>
+                <p className="text-xl md:text-2xl font-bold text-gray-900">{stat.value}</p>
+                <p className="text-xs text-gray-500 leading-tight">{stat.label}</p>
               </div>
             </div>
           </Card>

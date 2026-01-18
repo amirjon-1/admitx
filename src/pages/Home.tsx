@@ -81,7 +81,7 @@ export function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src="/vite.svg" alt="AdmitX Logo" className="w-16 h-auto" />
-            <span className="text-2xl font-bold text-gray-900">AdmitX</span>
+            <span className="text-xl sm:text-2xl font-bold text-gray-900">AdmitX</span>
           </div>
           <Button
             size="sm"
@@ -122,11 +122,11 @@ export function Home() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 md:mb-6 leading-tight">
                 Your college application companion
               </h1>
 
-              <p className="text-xl text-gray-600 mb-6">
+              <p className="text-base sm:text-lg md:text-xl text-gray-600 mb-4 md:mb-6">
                 Get AI-powered essay feedback, track applications, and maximize your chances of admission.
               </p>
 
@@ -169,7 +169,7 @@ export function Home() {
             >
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-primary-200 to-accent-200 rounded-2xl blur-3xl opacity-20"></div>
-                <div className="relative bg-white rounded-2xl p-8 shadow-xl border border-gray-200">
+                <div className="relative bg-white rounded-2xl p-4 md:p-8 shadow-xl border border-gray-200">
                   <div className="mb-6">
                     <h4 className="text-base font-semibold text-gray-500 uppercase mb-2">Essay Feedback</h4>
                     <p className="text-lg text-gray-900 font-semibold mb-4">Personal Statement</p>
@@ -206,7 +206,7 @@ export function Home() {
           transition={{ duration: 0.6 }}
           className="mb-16"
         >
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             Powerful features for smarter applications
           </h2>
           <p className="text-xl text-gray-600">
@@ -214,7 +214,7 @@ export function Home() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
           {features.map((feature, index) => (
             <motion.div
               key={feature.title}
@@ -222,7 +222,7 @@ export function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className="group bg-white rounded-xl p-8 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-primary-200"
+              className="group bg-white rounded-xl p-4 md:p-8 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-primary-200"
             >
               <div className="w-12 h-12 rounded-lg bg-primary-100 text-primary-600 flex items-center justify-center mb-4 group-hover:bg-primary-200 transition-colors">
                 {feature.icon}
@@ -247,7 +247,7 @@ export function Home() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <h3 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+            <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4">
               Ready to start your journey?
             </h3>
             <p className="text-lg text-primary-100 mb-8">

@@ -43,7 +43,7 @@ export function CollegeCard({ college, requirements = [], onClick }: CollegeCard
       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
     >
       <Card
-        className="p-5 cursor-pointer hover:shadow-md transition-shadow"
+        className="p-4 md:p-5 cursor-pointer hover:shadow-md transition-shadow"
         onClick={onClick}
       >
         <div className="flex items-start gap-4 mb-4">

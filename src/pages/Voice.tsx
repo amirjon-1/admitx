@@ -13,7 +13,7 @@ export function Voice() {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <h1 className="text-2xl font-semibold mb-2">Voice Interview</h1>
       <p className="text-gray-600 mb-6">
         Click connect to open the live interview experience.

@@ -143,7 +143,7 @@ export function Activities() {
       level: "School",
       description: "",
       gradeReceived: "12",
-    });
+  });
 
   const handleAddActivity = () => {
     if (!user) return;
@@ -388,23 +388,23 @@ export function Activities() {
         }}
       />
 
-      <div className="p-8">
+      <div className="p-4 md:p-8">
         {/* Tabs + Generate */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
           <div className="flex gap-2">
-            <Button
+          <Button
               variant={activeTab === "activities" ? "primary" : "secondary"}
               onClick={() => setActiveTab("activities")}
-            >
-              <Trophy className="w-4 h-4 mr-2" />
-              Activities ({activities.length})
-            </Button>
-            <Button
+          >
+            <Trophy className="w-4 h-4 mr-2" />
+            Activities ({activities.length})
+          </Button>
+          <Button
               variant={activeTab === "honors" ? "primary" : "secondary"}
               onClick={() => setActiveTab("honors")}
-            >
-              <Award className="w-4 h-4 mr-2" />
-              Honors ({honors.length})
+          >
+            <Award className="w-4 h-4 mr-2" />
+            Honors ({honors.length})
             </Button>
           </div>
 
@@ -427,7 +427,7 @@ export function Activities() {
 
         {/* Activities */}
         {activeTab === "activities" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {filteredActivities.map((activity, index) => (
               <motion.div
                 key={activity.id}
@@ -460,7 +460,7 @@ export function Activities() {
                     </p>
                     <p className="text-sm text-gray-600 mb-4">{activity.description}</p>
 
-                    <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                    <div className="grid grid-cols-3 gap-1 md:gap-2 text-center text-xs">
                       <div className="bg-gray-50 rounded-lg p-2">
                         <p className="font-bold text-gray-900">{activity.hoursPerWeek}</p>
                         <p className="text-gray-500">hrs/week</p>
@@ -496,7 +496,7 @@ export function Activities() {
 
         {/* Honors */}
         {activeTab === "honors" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {honors.map((honor, index) => (
               <motion.div
                 key={honor.id}
@@ -622,7 +622,7 @@ export function Activities() {
       {/* Add Activity Modal */}
       <Modal isOpen={isAddActivityOpen} onClose={() => setIsAddActivityOpen(false)} title="Add Activity" size="lg">
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
             <Input
               label="Activity Name"
               value={activityForm.name}
@@ -637,7 +637,7 @@ export function Activities() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
             <Select
               label="Category"
               options={CATEGORY_OPTIONS}
@@ -660,7 +660,7 @@ export function Activities() {
             rows={3}
           />
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
             <Input
               label="Hours/Week"
               type="number"
@@ -712,7 +712,7 @@ export function Activities() {
             placeholder="e.g., National Merit Semifinalist"
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
             <Select
               label="Recognition Level"
               options={TIER_OPTIONS}

@@ -320,7 +320,7 @@ export function Essays() {
         subtitle="Write and analyze your college application essays"
       />
 
-      <div className="p-8">
+      <div className="p-4 md:p-8">
         {/* Tabs */}
         <div className="flex gap-2 mb-6 border-b border-gray-200">
           <button
@@ -354,7 +354,7 @@ export function Essays() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+              className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8"
             >
               {/* Essay Input */}
               <div className="space-y-4">

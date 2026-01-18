@@ -108,12 +108,12 @@ export function Dashboard() {
         }}
       />
 
-      <div className="p-8 space-y-8">
+      <div className="p-4 md:p-8 space-y-4 md:space-y-8">
         {/* Stats Overview */}
         <StatsOverview colleges={colleges} essays={essays} />
 
         {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
           {/* Colleges Grid */}
           <div className="lg:col-span-2">
             <Card>

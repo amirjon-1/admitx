@@ -24,7 +24,11 @@ const navigation = [
   { name: 'Markets', href: '/markets', icon: TrendingUp },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  onNavigate?: () => void;
+}
+
+export function Sidebar({ onNavigate }: SidebarProps = {}) {
   const { user, setUser, setColleges, setEssays, setActivities, setHonors } = useStore();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -32,6 +36,7 @@ export function Sidebar() {
     if (isLoggingOut) return; // Prevent multiple clicks
     
     setIsLoggingOut(true);
+    
     try {
       console.log('Starting logout...');
       
@@ -42,15 +47,10 @@ export function Sidebar() {
       setActivities([]);
       setHonors([]);
       
-      // Sign out from Supabase and WAIT for it to complete
-      const { error } = await supabase.auth.signOut();
+      // Set a flag to prevent auto-login on next page load
+      sessionStorage.setItem('admitx_logging_out', 'true');
       
-      if (error) {
-        console.error('Sign out error:', error);
-        // Continue anyway - we'll clear storage manually
-      }
-      
-      // Clear all Supabase-related storage
+      // Clear all Supabase-related storage first
       try {
         // Clear Supabase session storage
         const supabaseKeys = Object.keys(localStorage).filter(key => 
@@ -58,33 +58,38 @@ export function Sidebar() {
         );
         supabaseKeys.forEach(key => localStorage.removeItem(key));
         
-        // Also clear sessionStorage
+        // Also clear sessionStorage (except our logout flag)
         const sessionKeys = Object.keys(sessionStorage).filter(key => 
-          key.startsWith('sb-') || key.includes('supabase')
+          (key.startsWith('sb-') || key.includes('supabase')) && key !== 'admitx_logging_out'
         );
         sessionKeys.forEach(key => sessionStorage.removeItem(key));
       } catch (storageError) {
         console.error('Error clearing storage:', storageError);
       }
       
+      // Sign out from Supabase (don't wait - do it in background)
+      supabase.auth.signOut().catch(err => {
+        console.error('Sign out error:', err);
+      });
+      
       console.log('Sign out successful, redirecting...');
       
-      // Set a flag to prevent auto-login on next page load
-      sessionStorage.setItem('admitx_logging_out', 'true');
-      
-      // Add a small delay to ensure everything is cleared, then redirect
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Redirect to home page with full reload
-      window.location.href = '/';
+      // Force immediate redirect - use setTimeout to ensure it happens after state updates
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 50);
     } catch (error) {
       console.error('Logout error:', error);
+      
       // Clear state anyway
       setUser(null);
       setColleges([]);
       setEssays([]);
       setActivities([]);
       setHonors([]);
+      
+      // Set logout flag
+      sessionStorage.setItem('admitx_logging_out', 'true');
       
       // Clear storage manually
       try {
@@ -93,7 +98,7 @@ export function Sidebar() {
         );
         supabaseKeys.forEach(key => localStorage.removeItem(key));
         const sessionKeys = Object.keys(sessionStorage).filter(key => 
-          key.startsWith('sb-') || key.includes('supabase')
+          (key.startsWith('sb-') || key.includes('supabase')) && key !== 'admitx_logging_out'
         );
         sessionKeys.forEach(key => sessionStorage.removeItem(key));
       } catch (storageError) {
@@ -101,12 +106,14 @@ export function Sidebar() {
       }
       
       // Force redirect
-      window.location.href = '/';
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 50);
     }
   };
 
   return (
-    <div className="flex flex-col h-full w-64 bg-gray-900 text-white">
+    <div className="flex flex-col h-full w-64 md:w-64 bg-gray-900 text-white">
       {/* Logo */}
       <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-800">
         <img 
@@ -126,6 +133,7 @@ export function Sidebar() {
           <NavLink
             key={item.name}
             to={item.href}
+            onClick={onNavigate}
             className={({ isActive }) =>
               cn(
                 'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200',
