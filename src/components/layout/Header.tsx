@@ -1,6 +1,7 @@
 import { Bell, Search, Plus } from 'lucide-react';
 import { Button } from '../ui';
 import { useStore } from '../../store/useStore';
+import { signInWithGoogle, signOut } from '../../lib/supabase';
 
 interface HeaderProps {
   title: string;
@@ -13,7 +14,7 @@ interface HeaderProps {
 }
 
 export function Header({ title, subtitle, action }: HeaderProps) {
-  const { user } = useStore();
+  const { user, isAuthenticated } = useStore();
 
   return (
     <header className="bg-white border-b border-gray-200 px-8 py-4">
@@ -57,6 +58,17 @@ export function Header({ title, subtitle, action }: HeaderProps) {
             <Button onClick={action.onClick} className="gap-2">
               {action.icon || <Plus className="w-4 h-4" />}
               {action.label}
+            </Button>
+          )}
+
+          {/* Auth Buttons */}
+          {!isAuthenticated ? (
+            <Button variant="secondary" onClick={() => signInWithGoogle()}>
+              Sign in with Google
+            </Button>
+          ) : (
+            <Button variant="secondary" onClick={() => signOut()}>
+              Sign out
             </Button>
           )}
         </div>

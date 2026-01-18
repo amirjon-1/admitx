@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { upsertCollege, deleteCollege, upsertEssay, deleteEssay, upsertActivity, deleteActivity, upsertHonor, deleteHonor } from '../lib/supabase';
 import type {
   User,
   StudentProfile,
@@ -102,65 +103,94 @@ export const useStore = create<AppState>()(
       colleges: [],
       setColleges: (colleges) => set({ colleges }),
       addCollege: (college) =>
-        set((state) => ({ colleges: [...state.colleges, college] })),
+        set((state) => {
+          const next = [...state.colleges, college];
+          if (state.user) upsertCollege(state.user.id, college).catch(console.error);
+          return { colleges: next };
+        }),
       updateCollege: (id, updates) =>
-        set((state) => ({
-          colleges: state.colleges.map((c) =>
-            c.id === id ? { ...c, ...updates } : c
-          ),
-        })),
+        set((state) => {
+          const next = state.colleges.map((c) => (c.id === id ? { ...c, ...updates } : c));
+          const updated = next.find((c) => c.id === id);
+          if (state.user && updated) upsertCollege(state.user.id, updated).catch(console.error);
+          return { colleges: next };
+        }),
       removeCollege: (id) =>
-        set((state) => ({
-          colleges: state.colleges.filter((c) => c.id !== id),
-        })),
+        set((state) => {
+          if (state.user) deleteCollege(id).catch(console.error);
+          return { colleges: state.colleges.filter((c) => c.id !== id) };
+        }),
 
       // Essays
       essays: [],
       setEssays: (essays) => set({ essays }),
       addEssay: (essay) =>
-        set((state) => ({ essays: [...state.essays, essay] })),
+        set((state) => {
+          const next = [...state.essays, essay];
+          if (state.user) upsertEssay(state.user.id, essay).catch(console.error);
+          return { essays: next };
+        }),
       updateEssay: (id, updates) =>
-        set((state) => ({
-          essays: state.essays.map((e) =>
-            e.id === id ? { ...e, ...updates } : e
-          ),
-        })),
+        set((state) => {
+          const next = state.essays.map((e) => (e.id === id ? { ...e, ...updates } : e));
+          const updated = next.find((e) => e.id === id);
+          if (state.user && updated) {
+            upsertEssay(state.user.id, {
+              ...updated,
+              updatedAt: new Date(),
+            }).catch(console.error);
+          }
+          return { essays: next };
+        }),
       removeEssay: (id) =>
-        set((state) => ({
-          essays: state.essays.filter((e) => e.id !== id),
-        })),
+        set((state) => {
+          if (state.user) deleteEssay(id).catch(console.error);
+          return { essays: state.essays.filter((e) => e.id !== id) };
+        }),
 
       // Activities
       activities: [],
       setActivities: (activities) => set({ activities }),
       addActivity: (activity) =>
-        set((state) => ({ activities: [...state.activities, activity] })),
+        set((state) => {
+          const next = [...state.activities, activity];
+          if (state.user) upsertActivity(state.user.id, activity).catch(console.error);
+          return { activities: next };
+        }),
       updateActivity: (id, updates) =>
-        set((state) => ({
-          activities: state.activities.map((a) =>
-            a.id === id ? { ...a, ...updates } : a
-          ),
-        })),
+        set((state) => {
+          const next = state.activities.map((a) => (a.id === id ? { ...a, ...updates } : a));
+          const updated = next.find((a) => a.id === id);
+          if (state.user && updated) upsertActivity(state.user.id, updated).catch(console.error);
+          return { activities: next };
+        }),
       removeActivity: (id) =>
-        set((state) => ({
-          activities: state.activities.filter((a) => a.id !== id),
-        })),
+        set((state) => {
+          if (state.user) deleteActivity(id).catch(console.error);
+          return { activities: state.activities.filter((a) => a.id !== id) };
+        }),
 
       // Honors
       honors: [],
       setHonors: (honors) => set({ honors }),
       addHonor: (honor) =>
-        set((state) => ({ honors: [...state.honors, honor] })),
+        set((state) => {
+          const next = [...state.honors, honor];
+          if (state.user) upsertHonor(state.user.id, honor).catch(console.error);
+          return { honors: next };
+        }),
       updateHonor: (id, updates) =>
-        set((state) => ({
-          honors: state.honors.map((h) =>
-            h.id === id ? { ...h, ...updates } : h
-          ),
-        })),
+        set((state) => {
+          const next = state.honors.map((h) => (h.id === id ? { ...h, ...updates } : h));
+          const updated = next.find((h) => h.id === id);
+          if (state.user && updated) upsertHonor(state.user.id, updated).catch(console.error);
+          return { honors: next };
+        }),
       removeHonor: (id) =>
-        set((state) => ({
-          honors: state.honors.filter((h) => h.id !== id),
-        })),
+        set((state) => {
+          if (state.user) deleteHonor(id).catch(console.error);
+          return { honors: state.honors.filter((h) => h.id !== id) };
+        }),
 
       // Voice Interviews
       interviews: [],
@@ -191,10 +221,21 @@ export const useStore = create<AppState>()(
       setSelectedEssayId: (id) => set({ selectedEssayId: id }),
     }),
     {
-      name: 'council-storage',
+      name: 'admitx-storage',
+      storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
+        profile: state.profile,
+        colleges: state.colleges,
+        essays: state.essays,
+        activities: state.activities,
+        honors: state.honors,
+        interviews: state.interviews,
+        markets: state.markets,
+        myBets: state.myBets,
+        selectedCollegeId: state.selectedCollegeId,
+        selectedEssayId: state.selectedEssayId,
       }),
     }
   )
