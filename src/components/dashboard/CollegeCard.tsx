@@ -48,58 +48,71 @@ export function CollegeCard({ college, requirements = [], onClick }: CollegeCard
         className="p-5 cursor-pointer hover:shadow-md transition-shadow"
         onClick={onClick}
       >
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
+        <div className="flex items-start gap-4 mb-4">
+          {/* Logo Section */}
+          <div className="flex-shrink-0">
             {logo ? (
               <img
                 src={logo}
                 alt={college.name}
-                className="w-10 h-10 rounded-lg object-contain bg-gray-100 p-1"
+                className="w-20 h-20 rounded-lg object-contain bg-gray-100 p-2"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
+                  const parent = (e.target as HTMLImageElement).parentElement;
+                  if (parent) {
+                    const fallback = document.createElement('div');
+                    fallback.className = 'w-20 h-20 rounded-lg bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center';
+                    fallback.innerHTML = `<span class="text-2xl font-bold text-primary-600">${college.name[0]}</span>`;
+                    parent.appendChild(fallback);
+                  }
                 }}
               />
-            ) : (
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center">
-                <span className="text-lg font-bold text-primary-600">
+            ) : null}
+            {!logo && (
+              <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center">
+                <span className="text-2xl font-bold text-primary-600">
                   {college.name[0]}
                 </span>
               </div>
             )}
-            <div>
-              <h3 className="font-semibold text-gray-900">{college.name}</h3>
-              <p className="text-sm text-gray-500">{college.decisionType}</p>
-            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            {college.result ? (
-              <Badge
-                variant={
-                  college.result === 'accepted'
-                    ? 'success'
-                    : college.result === 'rejected'
-                    ? 'danger'
-                    : 'warning'
-                }
-                size="sm"
-              >
-                {resultLabels[college.result]}
-              </Badge>
-            ) : (
-              <Badge
-                variant={
-                  college.status === 'submitted'
-                    ? 'success'
-                    : college.status === 'in_progress'
-                    ? 'info'
-                    : 'default'
-                }
-                size="sm"
-              >
-                {statusLabels[college.status]}
-              </Badge>
-            )}
+          {/* College Info and Status */}
+          <div className="flex-1 flex items-start justify-between">
+            <div>
+              <h3 className="font-semibold text-gray-900 text-lg">{college.name}</h3>
+              <p className="text-sm text-gray-500 font-medium">{college.decisionType}</p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {college.result ? (
+                <Badge
+                  variant={
+                    college.result === 'accepted'
+                      ? 'success'
+                      : college.result === 'rejected'
+                      ? 'danger'
+                      : 'warning'
+                  }
+                  size="sm"
+                >
+                  {resultLabels[college.result]}
+                </Badge>
+              ) : (
+                <Badge
+                  variant={
+                    college.status === 'submitted'
+                      ? 'success'
+                      : college.status === 'in_progress'
+                      ? 'info'
+                      : 'default'
+                  }
+                  size="sm"
+                >
+                  {statusLabels[college.status]}
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
 
