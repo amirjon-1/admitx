@@ -40,17 +40,27 @@ function App() {
           console.error('Error getting session:', error);
         }
         
-        if (session?.user && isMounted) {
-          const appUser = { 
-            id: session.user.id, 
-            email: session.user.email || '', 
-            username: session.user.user_metadata?.name || '' 
-          };
-          setUser({ ...appUser, credits: 1000, createdAt: new Date() });
-          
-          // Don't await these - let them run in background
-          ensureUserRow(appUser).catch(console.error);
-          loadUserData(session.user.id).catch(console.error);
+        if (isMounted) {
+          if (session?.user) {
+            // Valid session - set user
+            const appUser = { 
+              id: session.user.id, 
+              email: session.user.email || '', 
+              username: session.user.user_metadata?.name || '' 
+            };
+            setUser({ ...appUser, credits: 1000, createdAt: new Date() });
+            
+            // Don't await these - let them run in background
+            ensureUserRow(appUser).catch(console.error);
+            loadUserData(session.user.id).catch(console.error);
+          } else {
+            // No valid session - clear user to prevent stale redirects
+            setUser(null);
+            setColleges([]);
+            setEssays([]);
+            setActivities([]);
+            setHonors([]);
+          }
         }
       } catch (error) {
         console.error('Auth initialization error:', error);

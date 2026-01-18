@@ -23,8 +23,8 @@ export function Home() {
     }
   }, []);
 
-  // If user is already logged in, redirect to dashboard
-  // Check if there's a redirect location from ProtectedRoute
+  // Only redirect if user is in store (App.tsx handles session validation)
+  // Don't redirect if user is null/undefined
   if (user) {
     const from = (location.state as any)?.from?.pathname;
     return <Navigate to={from || "/dashboard"} replace />;
