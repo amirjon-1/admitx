@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Plus, GraduationCap } from 'lucide-react';
 import { Header } from '../components/layout';
@@ -83,16 +84,16 @@ const DEMO_COLLEGES: College[] = [
 ];
 
 export function Dashboard() {
-  const { colleges, essays, addCollege, setColleges } = useStore();
+  const navigate = useNavigate();
+  const { colleges, essays, addCollege } = useStore();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-
-  // Initialize with demo data if empty
-  if (colleges.length === 0) {
-    setColleges(DEMO_COLLEGES);
-  }
 
   const handleAddCollege = (college: College) => {
     addCollege(college);
+  };
+
+  const handleCollegeClick = (college: College) => {
+    navigate('/colleges', { state: { selectedCollege: college.name } });
   };
 
   return (
@@ -156,9 +157,7 @@ export function Dashboard() {
                       >
                         <CollegeCard
                           college={college}
-                          onClick={() => {
-                            // Navigate to college detail
-                          }}
+                          onClick={() => handleCollegeClick(college)}
                         />
                       </motion.div>
                     ))}
