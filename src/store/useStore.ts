@@ -105,14 +105,22 @@ export const useStore = create<AppState>()(
       addCollege: (college) =>
         set((state) => {
           const next = [...state.colleges, college];
-          if (state.user) upsertCollege(state.user.id, college).catch(console.error);
+          if (state.user) {
+            upsertCollege(state.user.id, college).catch((err) => {
+              console.error('Failed to save college to Supabase', err);
+            });
+          }
           return { colleges: next };
         }),
       updateCollege: (id, updates) =>
         set((state) => {
           const next = state.colleges.map((c) => (c.id === id ? { ...c, ...updates } : c));
           const updated = next.find((c) => c.id === id);
-          if (state.user && updated) upsertCollege(state.user.id, updated).catch(console.error);
+          if (state.user && updated) {
+            upsertCollege(state.user.id, updated).catch((err) => {
+              console.error('Failed to update college in Supabase', err);
+            });
+          }
           return { colleges: next };
         }),
       removeCollege: (id) =>

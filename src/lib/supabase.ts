@@ -98,7 +98,10 @@ export async function upsertCollege(userId: string, college: College) {
     result: college.result,
   };
   const { error } = await supabase.from('colleges').upsert(payload, { onConflict: 'id' });
-  if (error) throw error;
+  if (error) {
+    console.error('upsertCollege error', error.message, payload);
+    throw error;
+  }
 }
 
 export async function deleteCollege(id: string) {
@@ -144,7 +147,10 @@ export async function upsertEssay(userId: string, essay: Essay) {
     updated_at: essay.updatedAt.toISOString(),
   };
   const { error } = await supabase.from('essays').upsert(payload, { onConflict: 'id' });
-  if (error) throw error;
+  if (error) {
+    console.error('upsertEssay error', error.message, payload);
+    throw error;
+  }
 }
 
 export async function deleteEssay(id: string) {
