@@ -147,7 +147,7 @@ export async function fetchEssays(userId: string): Promise<Essay[]> {
   console.log('📥 Fetching essays from database for user:', userId);
   
   // First, check if we can query the table at all
-  const { data: testData, error: testError } = await supabase
+  const { error: testError } = await supabase
     .from('essays')
     .select('count')
     .limit(1);
@@ -313,7 +313,8 @@ export async function upsertEssay(userId: string, essay: Essay) {
     payload.user_id = userId;
     
     // Try direct upsert - simpler approach
-    let data, error;
+    let data: any = null;
+    let error: any = null;
     try {
       console.log('🔄 Attempting direct upsert (no select first)...');
       
@@ -405,10 +406,10 @@ export async function upsertEssay(userId: string, essay: Essay) {
     }
     
     if (error) {
-      console.error('❌ upsertEssay error:', error.message);
+      console.error('❌ upsertEssay error:', error?.message || 'Unknown error');
       console.error('Error details:', error);
-      console.error('Error code:', error.code);
-      console.error('Error hint:', error.hint);
+      console.error('Error code:', error?.code);
+      console.error('Error hint:', error?.hint);
       console.error('Error details object:', JSON.stringify(error, null, 2));
       console.error('Payload that failed:', payload);
       throw error;

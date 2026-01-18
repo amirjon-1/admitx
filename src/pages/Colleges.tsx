@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -13,7 +13,7 @@ import {
 
 import { Header } from '../components/layout';
 import { CollegeCard, AddCollegeModal } from '../components/dashboard';
-import { Card, CardContent, Button, Input } from '../components/ui';
+import { CardContent, Button, Input } from '../components/ui';
 import { useStore } from '../store/useStore';
 import type { College, CollegeStatus } from '../types';
 

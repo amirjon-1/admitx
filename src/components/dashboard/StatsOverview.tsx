@@ -18,7 +18,6 @@ export function StatsOverview({ colleges, essays }: StatsOverviewProps) {
   const totalColleges = colleges.length;
   const submitted = colleges.filter((c) => c.status === 'submitted' || c.status === 'decided').length;
   const inProgress = colleges.filter((c) => c.status === 'in_progress').length;
-  const notStarted = colleges.filter((c) => c.status === 'not_started').length;
 
   const upcomingDeadlines = colleges.filter((c) => {
     if (!c.deadline || c.status === 'submitted' || c.status === 'decided') return false;

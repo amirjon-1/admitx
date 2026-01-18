@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Search, Trophy, Sparkles, Trash2, Edit, Award, Mic } from "lucide-react";
+import { Plus, Search, Trophy, Trash2, Edit, Award, Mic } from "lucide-react";
 import { Header } from "../components/layout";
 import { Card, CardContent, Button, Input, Badge, Modal, Select, TextArea } from "../components/ui";
 import { useStore } from "../store/useStore";

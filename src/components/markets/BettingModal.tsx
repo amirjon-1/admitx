@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Info, Calculator } from 'lucide-react';
 import { Modal, Button, Input, Badge } from '../ui';
 import { formatCredits, cn } from '../../lib/utils';

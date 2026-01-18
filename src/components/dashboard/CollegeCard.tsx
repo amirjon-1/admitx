@@ -1,12 +1,10 @@
 import { motion } from 'framer-motion';
-import { Calendar, ChevronRight, ExternalLink } from 'lucide-react';
+import { Calendar, ChevronRight } from 'lucide-react';
 import { Card, Badge, Progress } from '../ui';
 import {
   formatDateShort,
   getDaysUntilText,
   getDeadlineColor,
-  getStatusColor,
-  getResultColor,
   getCollegeLogo,
 } from '../../lib/utils';
 import type { College, Requirement } from '../../types';

@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Users, Clock } from 'lucide-react';
 import { Card, Badge, Button } from '../ui';
-import { formatCredits, formatDateShort, daysUntil, getOddsColor } from '../../lib/utils';
+import { formatCredits, daysUntil, getOddsColor } from '../../lib/utils';
 import type { AdmissionsMarket, AnonymousProfile } from '../../types';
 
 interface MarketCardProps {

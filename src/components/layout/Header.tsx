@@ -1,7 +1,7 @@
-import { Bell, Search, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Button } from '../ui';
 import { useStore } from '../../store/useStore';
-import { signInWithGoogle, signOut } from '../../lib/supabase';
+import { signInWithGoogle } from '../../lib/supabase';
 
 interface HeaderProps {
   title: string;
